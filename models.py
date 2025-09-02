@@ -6,12 +6,15 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 def init_db(app):
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    instance_dir = os.path.join(base_dir, "instance")
-    os.makedirs(instance_dir, exist_ok=True)
-    db_path = os.path.join(instance_dir, "app.db")
+    uri = os.getenv("DATABASE_URL")
+    if not uri:
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        instance_dir = os.path.join(base_dir, "instance")
+        os.makedirs(instance_dir, exist_ok=True)
+        db_path = os.path.join(instance_dir, "app.db")
+        uri = f"sqlite:///{db_path}"
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = app.config.get("SECRET_KEY", "tajny_klic_pro_session")
 
