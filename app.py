@@ -91,7 +91,7 @@ def auth_page():
   </style>
 </head>
 <body>
-  <div class="page-logo">PROTOKOL</div>
+  <div class="page-logo">MYPRIORITIES</div>
   <div class="bg"></div>
   <div class="wrap">
     <div class="glass">
