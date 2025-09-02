@@ -39,50 +39,55 @@ def auth_page():
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root{
-      --text:#eafff2;
-      --muted:#9ecbff;
-      --border:rgba(255,255,255,.14);
+      --text:#0f1a24;
+      --muted:#4b6b88;
+      --border:rgba(0,0,0,.08);
       --accent-a:#0090ff;
       --accent-b:#26b0ff;
     }
+
     html,body{height:100%}
-    body{ margin:0; background:#1d262d; color:var(--text); font-family:"Work Sans", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial; overflow-x:hidden; }
+    body{ margin:0; background:#ffffff; color:var(--text); font-family:"Work Sans", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial; overflow-x:hidden; }
+
     .bg{ position:fixed; inset:-20vh -20vw -20vh -20vw; pointer-events:none; z-index:0; overflow:hidden; }
-    .bg::before{ content:""; position:absolute; width:60vmin; height:60vmin; left:25vw; top:20vh; background:radial-gradient(circle at 50% 50%, rgba(0,160,255,0.65) 0%, rgba(0,160,255,0.28) 40%, rgba(0,140,255,0) 70%); filter: blur(70px); transform: translateZ(0); animation: pulse 6s ease-in-out infinite; }
-    .bg::after{ content:""; position:absolute; width:48vmin; height:48vmin; left:60vw; top:55vh; background:radial-gradient(circle at 50% 50%, rgba(38,170,255,0.55) 0%, rgba(38,170,255,0.24) 40%, rgba(38,150,255,0) 70%); filter: blur(90px); transform: translateZ(0); animation: drift 10s ease-in-out infinite; }
-    @keyframes pulse { 0%{transform:scale(1);opacity:.95;filter:blur(90px)} 50%{transform:scale(1.15);opacity:.85;filter:blur(120px)} 100%{transform:scale(1);opacity:.95;filter:blur(90px)} }
-    @keyframes drift { 0%{transform:translate3d(-2vw,-2vh,0) scale(1)} 50%{transform:translate3d(2vw,1vh,0) scale(1.08)} 100%{transform:translate3d(-2vw,-2vh,0) scale(1)} }
+    .bg::before{ content:""; position:absolute; width:82vmin; height:82vmin; left:50%; top:46%; transform:translate(-50%,-50%); background:radial-gradient(circle at 50% 50%, rgba(0,185,255,.44) 0%, rgba(92,122,255,.40) 33%, rgba(255,120,200,.30) 58%, rgba(0,0,0,0) 72%); filter: blur(120px); opacity:.92; }
+    .bg::after{ content:""; position:absolute; width:48vmin; height:48vmin; left:50%; top:46%; transform:translate(-50%,-50%); background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.80) 0%, rgba(255,255,255,.0) 60%); filter: blur(30px); opacity:.9; }
 
     .wrap{ position:relative; z-index:1; min-height:100%; display:flex; align-items:center; justify-content:center; padding:6vh 4vw; }
-    .glass{ width:min(560px, 100%); border-radius:18px; background: rgba(16, 24, 20, 0.35); border: 1px solid var(--border); backdrop-filter: blur(24px) saturate(120%); -webkit-backdrop-filter: blur(24px) saturate(120%); }
+    .glass{ width:min(560px, 100%); border-radius:20px; background: transparent; border: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .card{ padding:18px 20px; border:1px solid rgba(0,0,0,.06); border-radius:18px; background:rgba(255,255,255,.65); box-shadow:0 8px 22px rgba(15,27,36,.07); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); }
 
     header{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; border-bottom:1px solid var(--border) }
     .brand{ display:flex; align-items:center; gap:10px; font-family:'Quicksand', sans-serif; font-weight:800; letter-spacing:.4px; }
-    .pill{ border:2px solid rgba(255,255,255,.5); border-radius:999px; padding:4px 10px; font-size:12px; color:#cae6ff; }
+    .pill{ border:1px solid rgba(0,120,255,.18); background:rgba(0,120,255,.08); border-radius:999px; padding:6px 12px; font-size:12px; color:#0f3555; }
 
     main{ padding:22px 22px 26px }
     h1{ font-family:'Quicksand', sans-serif; margin:0 0 8px; font-size:28px }
     .kicker{ color:var(--muted); font-size:14px; margin-bottom:16px }
+
     .row{ margin:10px 0 }
     input{
       width: calc(100% - 20px);
       max-width: 500px;
       padding: 12px 14px;
       border-radius: 12px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: #eafff2;
+      border: 1px solid rgba(15,27,36,.10);
+      background: #fff;
+      color: #0f1a24;
       outline: none;
       display: block;
       margin: 0 auto;
+      box-shadow:0 1px 0 rgba(15,27,36,.04);
     }
-    input::placeholder{ color:#a9cfff }
+    input::placeholder{ color:#5d7b96 }
+
     .controls{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px }
     .btn{ border:none; padding:12px 18px; border-radius:999px; font-family:'Quicksand', sans-serif; font-weight:800; cursor:pointer; }
     .btn.primary{ color:#00150b; background:linear-gradient(90deg, var(--accent-a), var(--accent-b)); }
-    .btn.secondary{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); color:#d5e9ff }
-    .msg{ font-size:13px; color:#ffcfbf; min-height:18px }
-    .page-logo { position: fixed; top: 20px; left: 24px; font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 23px; letter-spacing: 1px; color: #ffffff; text-transform: uppercase; z-index: 10; }
+    .btn.secondary{ background:#fff; border:1px solid rgba(15,27,36,.12); color:#0f1a24 }
+    .msg{ font-size:13px; color:#b04a2a; min-height:18px }
+
+    .page-logo { position: fixed; top: 20px; left: 24px; font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 23px; letter-spacing: 1px; color: #0f1a24; text-transform: uppercase; z-index: 10; }
   </style>
 </head>
 <body>
@@ -90,25 +95,27 @@ def auth_page():
   <div class="bg"></div>
   <div class="wrap">
     <div class="glass">
-      <header>
-        <div class="brand"><span class="pill">UX</span><span class="pill">UI</span><span>&nbsp;AUTH</span></div>
-        <div><a href="/" style="color:#b6d9ff;text-decoration:none;font-size:14px">Domů</a></div>
-      </header>
-      <main>
-        <h1>Přihlášení / Registrace</h1>
-        <div class="kicker">Po úspěchu tě hned pošlu na Priorities test.</div>
+      <div class="card">
+        <header>
+          <div class="brand"><span class="pill">UX</span><span class="pill">UI</span><span>&nbsp;AUTH</span></div>
+          <div><a href="/" style="color:#0f3555;text-decoration:none;font-size:14px">Domů</a></div>
+        </header>
+        <main>
+          <h1>Přihlášení / Registrace</h1>
+          <div class="kicker">Po úspěchu tě hned pošlu na Priorities test.</div>
 
-        <div class="row"><input id="email" type="email" placeholder="Email"></div>
-        <div class="row"><input id="password" type="password" placeholder="Heslo"></div>
+          <div class="row"><input id="email" type="email" placeholder="Email"></div>
+          <div class="row"><input id="password" type="password" placeholder="Heslo"></div>
 
-        <div class="controls">
-          <button class="btn secondary" id="btn-login">Přihlásit</button>
-          <button class="btn primary" id="btn-register">Registrovat</button>
-        </div>
+          <div class="controls">
+            <button class="btn secondary" id="btn-login">Přihlásit</button>
+            <button class="btn primary" id="btn-register">Registrovat</button>
+          </div>
 
-        <div class="row msg" id="msg"></div>
-        <div class="kicker">Nebo pokračuj na <a href="/priorities/" style="color:#b6d9ff">/priorities/</a> pokud už máš session.</div>
-      </main>
+          <div class="row msg" id="msg"></div>
+          <div class="kicker">Nebo pokračuj na <a href="/priorities/" style="color:#0f3555">/priorities/</a> pokud už máš session.</div>
+        </main>
+      </div>
     </div>
   </div>
 
