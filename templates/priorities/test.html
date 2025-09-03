@@ -298,15 +298,7 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/mobile-drag-drop/default-ponyfill.min.js"></script>
-  <script>
-    // Enable HTML5 Drag & Drop on touch devices (iOS/Android)
-    MobileDragDrop.polyfill({
-      dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride
-    });
-    // iOS Safari: keep DnD active by disabling passive touchmove
-    window.addEventListener('touchmove', function(){}, { passive: false });
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script>
     const bar = document.getElementById('bar');
     const circleBar = document.getElementById('circleBar');
@@ -358,26 +350,18 @@
       }));
 
       list.innerHTML = dataTop5.map((r,i)=>
-        `<li draggable="true" data-key="${r.key}"><span class="handle">⠿</span> <span class="catname">#${i+1} ${r.label}</span></li>`
+        `<li data-key="${r.key}"><span class="handle">⠿</span> <span class="catname">#${i+1} ${r.label}</span></li>`
       ).join('');
 
-      let dragEl = null;
-      list.addEventListener('dragstart', e=>{
-        const li = e.target.closest('li');
-        if (!li) return; dragEl = li; li.classList.add('ghost');
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      list.addEventListener('dragend', e=>{
-        if (dragEl) dragEl.classList.remove('ghost');
-        dragEl = null;
-      });
-      list.addEventListener('dragover', e=>{
-        e.preventDefault();
-        const after = [...list.querySelectorAll('li')].find(el => {
-          const rect = el.getBoundingClientRect();
-          return e.clientY < rect.top + rect.height/2;
-        });
-        if (after == null) list.appendChild(dragEl); else list.insertBefore(dragEl, after);
+      // Touch-friendly DnD across desktop & mobile
+      const sortable = new Sortable(list, {
+        animation: 150,
+        handle: '.handle',
+        ghostClass: 'ghost',
+        dragClass: 'dragging',
+        forceFallback: true,
+        fallbackOnBody: true,
+        touchStartThreshold: 3
       });
 
       async function saveOrder(){
