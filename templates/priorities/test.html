@@ -120,10 +120,17 @@
     .logout-icon:hover { background: linear-gradient(90deg, var(--accent-a), var(--accent-b)); border-color: transparent; box-shadow:0 8px 18px rgba(0,140,255,.18); }
     .logout-icon svg { stroke: #0f1a24; transition: stroke 0.2s ease; }
     .logout-icon:hover svg { stroke: #001224; }
-  </style>
+</style>
+  /* --- Mobile HTML5 Drag & Drop helpers --- */
+  [draggable="true"], .draggable{
+    touch-action: none;             /* prevent scroll from swallowing drag */
+    -webkit-user-drag: element;     /* Safari */
+    cursor: grab;
+  }
+  .dragging{ opacity: .75; }
 </head>
 <body>
-  <div class="page-logo">MYPRIORITIES</div>
+  <div class="page-logo">PROTOKOL</div>
   <div class="logout-icon" id="logoutBtn" title="Odhlásit">
     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="9"/>
@@ -287,6 +294,15 @@
     </div>
   </div>
 
+  <script src="https://unpkg.com/mobile-drag-drop/default-ponyfill.min.js"></script>
+  <script>
+    // Enable HTML5 Drag & Drop on touch devices (iOS/Android)
+    MobileDragDrop.polyfill({
+      dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride
+    });
+    // iOS Safari: keep DnD active by disabling passive touchmove
+    window.addEventListener('touchmove', function(){}, { passive: false });
+  </script>
   <script>
     const bar = document.getElementById('bar');
     const circleBar = document.getElementById('circleBar');
