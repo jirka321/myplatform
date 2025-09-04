@@ -8,13 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --text:#0f1a24;
-      --muted:#4b6b88;
-      --border:rgba(0,0,0,.08);
-      --accent-a:#0090ff;
-      --accent-b:#26b0ff;
-    }
+    :root{ --text:#0f1a24; --muted:#4b6b88; --border:rgba(0,0,0,.08); --accent-a:#0090ff; --accent-b:#26b0ff; }
 
     html,body{height:100%}
     body{ margin:0; background:#ffffff; color:var(--text); font-family:"Work Sans", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial; overflow-x:hidden; }
@@ -42,9 +36,9 @@
 
     .progressRow{ display:flex; align-items:center; gap:14px; }
     .circleWrap{ position:relative; width:56px; height:56px; }
-    .circleWrap svg{ transform:rotate(-90deg) }
+    .circleWrap svg{ transform:rotate(-90deg); overflow:visible; background:transparent; display:block; }
     .circle-track{ stroke: rgba(15,27,36,.12); }
-    .circle-bar{ stroke: url(#grad); filter: drop-shadow(0 0 6px rgba(0,140,255,.4)); transition: stroke-dashoffset .3s ease; }
+    .circle-bar{ stroke: var(--accent-a); transition: stroke-dashoffset .3s ease; }
     .circleWrap .pct{ position:absolute; inset:0; display:grid; place-items:center; font-family:'Quicksand', sans-serif; font-weight:800; font-size:12px; color:#274156; transform:translateZ(0); }
 
     .progress{ flex:1; height:8px; background:rgba(15,27,36,.06); border:1px solid rgba(15,27,36,.08); border-radius:999px; overflow:hidden; }
@@ -95,7 +89,6 @@
       .box-graph{ position:static }
     }
     .podium{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; align-items:end; }
-    /* --- TOP3 cards (1→3) --- */
     .top3{ display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
     .top3 .item{ position:relative; border:1px solid rgba(15,27,36,.10); border-radius:18px; padding:16px; background:#ffffff; box-shadow:none; }
     .top3 .item .head{ display:flex; align-items:center; gap:10px; margin-bottom:6px }
@@ -103,7 +96,6 @@
     .top3 .item .title{ font-family:'Quicksand',sans-serif; font-weight:800; font-size:16px }
     .top3 .item .meta{ color:#4b6b88; font-size:12px; margin:6px 0 8px }
     .top3 .item .desc{ font-size:13px; line-height:1.35; color:#0f1a24 }
-    /* pastel tints like schedule cards */
     .top3 .item.c1{ background:#eaf5ff; border-color: rgba(0,144,255,.20) }
     .top3 .item.c2{ background:#e9fbf6; border-color: rgba(0,200,170,.20) }
     .top3 .item.c3{ background:#fff6e0; border-color: rgba(255,180,0,.22) }
@@ -116,13 +108,30 @@
     th{ text-align:left; color:#274156 }
 
     .page-logo { position: fixed; top: 20px; left: 24px; font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 23px; letter-spacing: 1px; color: #0f1a24; text-transform: uppercase; z-index: 10; }
-    .logout-icon { position: fixed; top: 20px; right: 24px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid rgba(15,27,36,.12); cursor: pointer; z-index: 10; transition: background 0.2s ease, border 0.2s ease, box-shadow .2s ease; box-shadow:0 4px 12px rgba(15,27,36,.08); }
-    .logout-icon:hover { background: linear-gradient(90deg, var(--accent-a), var(--accent-b)); border-color: transparent; box-shadow:0 8px 18px rgba(0,140,255,.18); }
-    .logout-icon svg { stroke: #0f1a24; transition: stroke 0.2s ease; }
-    .logout-icon:hover svg { stroke: #001224; }
-</style>
-</style>
-</head>
+
+    .profile{ position: fixed; top: 20px; right: 24px; z-index: 20; padding-bottom: 12px; }
+    .profile-btn{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#fff; border:1px solid rgba(15,27,36,.12); cursor:pointer; transition: background .2s ease, border .2s ease, box-shadow .2s ease; box-shadow:0 4px 12px rgba(15,27,36,.08); }
+    .profile-btn:hover{ background: linear-gradient(90deg, var(--accent-a), var(--accent-b)); border-color: transparent; box-shadow:0 8px 18px rgba(0,140,255,.18); }
+    .profile-btn svg{ stroke:#0f1a24; transition: stroke .2s ease; }
+    .profile-btn:hover svg{ stroke:#001224; }
+    .menu{ position:absolute; right:0; top:44px; width:220px; border:1px solid rgba(15,27,36,.12); background:#fff; border-radius:12px; box-shadow:0 12px 24px rgba(15,27,36,.16); padding:8px; display:none; }
+    .profile:hover .menu{ display:block; }
+    .menu.open{ display:block; } /* touch fallback via JS */
+    .menu .sep{ height:1px; background:linear-gradient(90deg, rgba(15,27,36,.06), rgba(15,27,36,.12), rgba(15,27,36,.06)); margin:6px 6px; border-radius:1px; }
+    .menu h4{ margin:4px 8px 8px; font-family:'Quicksand',sans-serif; font-size:12px; letter-spacing:.4px; color:#274156; }
+    .menu .item{ display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:10px; cursor:pointer; text-decoration:none; color:#0f1a24; border:1px solid transparent; }
+    .menu .item:hover{ background:linear-gradient(180deg, rgba(0,140,255,.07), rgba(0,140,255,.02)); border-color: rgba(0,140,255,.18); }
+    .menu .item svg{ width:18px; height:18px; stroke:#0f1a24; }
+    .menu form{ margin:0; }
+    .hbtn{padding:8px 12px; border:1px solid rgba(15,27,36,.12); background:#fff; border-radius:8px; cursor:pointer; color:#0f1a24}
+    .hbtn.active{background:linear-gradient(90deg, var(--accent-a), var(--accent-b)); color:#00150b; border-color:transparent}
+    .mini-choices{ display:flex; gap:6px; }
+    .mini-choices .hbtn{ min-width:36px; text-align:center; padding:8px 10px; }
+    .mini-choices .hbtn.active{ pointer-events:none; opacity:.9 }
+    .mini-choices .hbtn.disabled{ opacity:.45; cursor:not-allowed; }
+    .review-card{ border:1px solid rgba(15,27,36,.12); border-radius:12px; padding:10px 12px; margin-bottom:10px; background:#fff; }
+    .review-text{ font-size:13px; color:#274156; margin-bottom:6px }
+  </style>
   <style>
     /* --- Mobile HTML5 Drag & Drop helpers --- */
     [draggable="true"], .draggable{
@@ -135,11 +144,29 @@
 </head>
 <body>
   <div class="page-logo">PROTOKOL</div>
-  <div class="logout-icon" id="logoutBtn" title="Odhlásit">
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="9"/>
-      <line x1="12" y1="7" x2="12" y2="13"/>
-    </svg>
+  <div class="profile" id="profile">
+    <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu" title="Profil">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+      </svg>
+    </button>
+    <div class="menu" id="profileMenu" role="menu" aria-label="Profil">
+      <h4>Uživatel</h4>
+      <form method="POST" action="{{ url_for('priorities.restart_priorities') }}">
+        <button class="item" type="submit" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v6m0 0l-2-2m2 2l2-2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Začít znovu
+        </button>
+      </form>
+      <div class="sep"></div>
+      <form method="POST" action="/auth">
+        <button class="item" type="submit" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Odhlásit
+        </button>
+      </form>
+    </div>
   </div>
 
   <div class="bg">
@@ -156,16 +183,17 @@
         <div class="progressRow">
           <div class="circleWrap">
             <svg width="56" height="56" viewBox="0 0 56 56" aria-label="Progres">
-              <defs>
-                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="var(--accent-a)" />
-                  <stop offset="100%" stop-color="var(--accent-b)" />
-                </linearGradient>
-              </defs>
               <circle class="circle-track" cx="28" cy="28" r="22" fill="none" stroke-width="6"/>
               <circle class="circle-bar" id="circleBar" cx="28" cy="28" r="22" fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="138.23"/>
             </svg>
             <div class="pct" id="circleText">0%</div>
+          </div>
+          <div class="circleWrap" aria-label="Zbývající body">
+            <svg width="56" height="56" viewBox="0 0 56 56">
+              <circle class="circle-track" cx="28" cy="28" r="22" fill="none" stroke-width="6"/>
+              <circle class="circle-bar" id="budgetCircleBar" cx="28" cy="28" r="22" fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="138.23"/>
+            </svg>
+            <div class="pct" id="budgetCircleText">…</div>
           </div>
           <div class="progress"><div class="bar" id="bar"></div></div>
         </div>
@@ -180,7 +208,7 @@
         {% elif stage == "likert" %}
           <div class="kicker">Položka {{ progress.index }} / {{ progress.total }}</div>
           <div class="statementBox">{{ data.text }}</div>
-          <form method="POST" action="{{ url_for('priorities.answer_likert') }}">
+          <form id="likertForm" method="POST" action="{{ url_for('priorities.answer_likert') }}">
             <input type="hidden" name="category_key" value="{{ data.category_key }}">
             <input type="hidden" name="statement_index" value="{{ data.statement_index }}">
             <div class="scale">
@@ -193,9 +221,13 @@
             </div>
             <div class="controls">
               <span class="hint">Vyber 1 možnost</span>
+              <button class="btn secondary" type="button" id="openReview" style="display:none">Upravit odpovědi</button>
               <button class="btn primary" type="submit">Pokračovat →</button>
             </div>
           </form>
+          <div id="budgetBanner" class="kicker" style="display:none; margin-top:8px; color:#8a3b00">
+            Nemáš dost bodů pro vyšší volbu. Sniž něco v dřívějších odpovědích – otevři „Upravit odpovědi“.
+          </div>
         {% elif stage == "duel" %}
           <div class="kicker">Porovnání {{ progress.index }} / {{ progress.total }}</div>
           <form method="POST" action="{{ url_for('priorities.answer_duel') }}">
@@ -216,14 +248,8 @@
         <div class="progressRow">
           <div class="circleWrap">
             <svg width="56" height="56" viewBox="0 0 56 56" aria-label="Progres">
-              <defs>
-                <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="var(--accent-a)" />
-                  <stop offset="100%" stop-color="var(--accent-b)" />
-                </linearGradient>
-              </defs>
               <circle class="circle-track" cx="28" cy="28" r="22" fill="none" stroke-width="6"/>
-              <circle class="circle-bar" cx="28" cy="28" r="22" fill="none" stroke="url(#grad2)" stroke-width="6" stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="0"/>
+              <circle class="circle-bar" cx="28" cy="28" r="22" fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="0"/>
             </svg>
             <div class="pct">100%</div>
           </div>
@@ -298,6 +324,30 @@
     </div>
   </div>
 
+  <!-- Modal: Upravit odpovědi -->
+  <div id="reviewModal" aria-hidden="true" style="display:none; position:fixed; inset:0; z-index:80;">
+    <div id="reviewBackdrop" style="position:absolute; inset:0; background:rgba(15,27,36,.42); backdrop-filter: blur(4px);"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="reviewTitle"
+         style="position:absolute; left:50%; top:52%; transform:translate(-50%,-50%); width:min(880px, 92vw); max-height:86vh; overflow:auto; background:#fff; border:1px solid rgba(15,27,36,.12); border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,.22);">
+      <div style="position:sticky; top:0; background:#fff; padding:14px 16px; border-bottom:1px solid rgba(15,27,36,.08); display:flex; gap:10px; align-items:center; justify-content:space-between">
+        <div style="display:flex; align-items:center; gap:10px">
+          <h3 id="reviewTitle" style="margin:0; font-family:'Quicksand',sans-serif">Upravit odpovědi</h3>
+          <span class="pill" id="modalBudget">Zbývá: …</span>
+          <span class="pill" id="modalItems">Položek: …</span>
+        </div>
+        <div style="display:flex; gap:6px">
+          <button class="hbtn" data-filter="all" id="fltAll">Vše</button>
+          <button class="hbtn active" data-filter="costly" id="fltCostly">4 &amp; 3</button>
+          <button class="hbtn" data-filter="recent" id="fltRecent">Nejnovější</button>
+        </div>
+      </div>
+      <div id="reviewList" style="padding:12px 16px"></div>
+      <div style="position:sticky; bottom:0; background:#fff; padding:12px 16px; border-top:1px solid rgba(15,27,36,.08); display:flex; justify-content:flex-end; gap:8px">
+        <button class="btn secondary" id="closeReview">Zavřít</button>
+        <button class="btn primary" id="continueReview">Pokračovat</button>
+      </div>
+    </div>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script>
     const bar = document.getElementById('bar');
@@ -321,6 +371,196 @@
           label.classList.add('selected');
         });
       });
+      // --- Budget settings (1→1, 4→4), modal-based review ---
+      const REVIEW_URL = "{{ url_for('priorities.review_answers') }}";
+      const ADJUST_URL = "{{ url_for('priorities.adjust_answer') }}";
+      const POOL = 280;
+      const LIKERT_MIN = {{ data.likert_min|default(1) }};
+      const LIKERT_MAX = {{ data.likert_max|default(4) }};
+      const idx = {{ progress.index }}; 
+      const total = {{ progress.total }};
+      const itemsInfo = document.getElementById('itemsInfo');
+      const budgetInfo = document.getElementById('budgetInfo'); // may be null now
+      const budgetBanner = document.getElementById('budgetBanner');
+      const openReviewBtn = document.getElementById('openReview');
+      const budgetCircleBar = document.getElementById('budgetCircleBar');
+      const budgetCircleText = document.getElementById('budgetCircleText');
+      let REMAINING = null; // global cache of remaining points
+
+      function setItemsLeft(){
+        const left = Math.max(0, total - (idx - 1));
+        if (itemsInfo) itemsInfo.textContent = `Položek: ${left}`;
+        const modalItems = document.getElementById('modalItems');
+        if (modalItems) modalItems.textContent = `Položek: ${left}`;
+      }
+
+      async function fetchRemaining(){
+        try{
+          const r = await fetch(REVIEW_URL);
+          if (!r.ok) throw new Error('status '+r.status);
+          const j = await r.json();
+          const rem = Number(j.remaining);
+          if (!Number.isFinite(rem)) throw new Error('bad payload');
+          updateRemaining(rem);
+          return { data: j };
+        }catch(e){
+          // fallback: unknown
+          updateRemaining(null);
+          return { data: { items: [] } };
+        }
+      }
+
+      function updateRemaining(rem){
+        REMAINING = rem;
+        // Update old pill if still present (harmless if removed)
+        const txt = (rem==null) ? 'Zbývá: …' : `Zbývá: ${rem}`;
+        if (budgetInfo) budgetInfo.textContent = txt;
+        const modalBudget = document.getElementById('modalBudget');
+        if (modalBudget) modalBudget.textContent = txt;
+        // Toggle banner and review button when out of budget
+        const out = (rem!=null && rem <= 0);
+        if (budgetBanner) budgetBanner.style.display = out ? 'block' : 'none';
+        if (openReviewBtn) openReviewBtn.style.display = out ? 'inline-block' : 'none';
+        // Drive the budget circle (shrinks as body ubývají)
+        if (typeof rem === 'number' && budgetCircleBar && budgetCircleText){
+          const p = Math.max(0, Math.min(100, Math.round( (rem / POOL) * 100 )));
+          const offset = CIRC * (1 - p/100);
+          budgetCircleBar.style.strokeDashoffset = offset;
+          budgetCircleText.textContent = String(rem);
+        } else if (budgetCircleText) {
+          budgetCircleText.textContent = '…';
+        }
+        lockChoicesByRemaining(rem);
+      }
+
+      function lockChoicesByRemaining(rem){
+        if (rem==null) return; // no locking if unknown
+        document.querySelectorAll('.choice').forEach(label=>{
+          const input = label.querySelector('input[type="radio"]');
+          const v = Number(input?.value || 0);
+          // na aktuální otázce předpokládáme, že stará hodnota je 0 (nevyplněno)
+          const dis = v > rem;
+          input.disabled = dis;
+          label.classList.toggle('disabled', dis);
+        });
+      }
+
+      // Modal wiring
+      const modal = document.getElementById('reviewModal');
+      const backdrop = document.getElementById('reviewBackdrop');
+      const reviewList = document.getElementById('reviewList');
+      const fltAll = document.getElementById('fltAll');
+      const fltCostly = document.getElementById('fltCostly');
+      const fltRecent = document.getElementById('fltRecent');
+
+      function openModal(){ modal.style.display = 'block'; modal.setAttribute('aria-hidden','false'); }
+      function closeModal(){ modal.style.display = 'none'; modal.setAttribute('aria-hidden','true'); }
+
+      async function loadReview(filter='costly'){
+        const qs = (filter==='costly') ? '?costly=1' : '';
+        const r = await fetch(REVIEW_URL+qs);
+        const j = await r.json().catch(()=>({items:[], remaining:null}));
+        updateRemaining(Number(j.remaining));
+        renderReviewItems(j.items || [], filter);
+      }
+
+      function renderReviewItems(items, filter){
+        if (filter==='recent'){
+          items = [...items].sort((a,b)=> (b.updated_at||0) - (a.updated_at||0));
+        }
+        reviewList.innerHTML = (items||[]).map(it=>{
+          const buttons = Array.from({length: LIKERT_MAX-LIKERT_MIN+1}, (_,i)=> i+LIKERT_MIN)
+            .map(v=>`<button class="hbtn ${v===Number(it.value)?'active':''}" data-qid="${it.q_id}" data-val="${v}">${v}</button>`).join('');
+          return `
+            <div class="review-card">
+              <div class="review-text">${it.text||''}</div>
+              <div class="mini-choices" data-qid="${it.q_id}">${buttons}</div>
+            </div>
+          `;
+        }).join('') || '<div class="kicker">Zatím tu nic není.</div>';
+        syncDisableInModal(); // disable volby nad rámec zbývajících bodů
+      }
+
+      function syncDisableInModal(){
+        const rem = (typeof REMAINING === 'number') ? REMAINING : null;
+        if (!Number.isFinite(rem)) return;
+        reviewList.querySelectorAll('.mini-choices').forEach(wrap=>{
+          const active = wrap.querySelector('.hbtn.active');
+          const currVal = Number(active?.dataset.val || 0);
+          wrap.querySelectorAll('.hbtn').forEach(btn=>{
+            const v = Number(btn.dataset.val);
+            const delta = v - currVal;
+            const dis = delta > rem; // zvýšení přes limit nedovolíme
+            btn.classList.toggle('disabled', dis);
+            btn.disabled = dis;
+          });
+        });
+      }
+
+      reviewList?.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('.hbtn');
+        if (!btn || btn.classList.contains('active') || btn.classList.contains('disabled')) return;
+        const qid = btn.dataset.qid; // composite id "category|index"
+        const val = Number(btn.dataset.val);
+        try{
+          const r = await fetch(ADJUST_URL, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ q_id: qid, new_value: val })
+          });
+          const j = await r.json();
+          if (!r.ok){
+            if (typeof j.remaining === 'number') updateRemaining(j.remaining);
+            return;
+          }
+          updateRemaining(Number(j.remaining));
+          // toggle active in group
+          const group = btn.parentElement;
+          group.querySelectorAll('.hbtn').forEach(b=>b.classList.toggle('active', b===btn));
+          syncDisableInModal();
+        }catch(err){ console.error(err); }
+      });
+
+      // open/close modal controls
+      openReviewBtn?.addEventListener('click', ()=>{
+        openModal();
+        loadReview('costly').catch(()=>{});
+      });
+      // Intercept submit: if no radio selected or out of budget, open modal instead of posting empty form
+      const likertForm = document.getElementById('likertForm');
+      likertForm?.addEventListener('submit', (e)=>{
+        const chosen = likertForm.querySelector('input[name="score"]:checked');
+        const rem = (typeof REMAINING === 'number') ? REMAINING : null;
+        if (!chosen || (typeof rem === 'number' && rem <= 0)){
+          e.preventDefault();
+          openModal();
+          loadReview('costly').catch(()=>{});
+        }
+      });
+      document.addEventListener('click', (e)=>{
+        const t = e.target && e.target.closest && e.target.closest('#openReview');
+        if (!t) return;
+        openModal();
+        loadReview('costly').catch(()=>{});
+      });
+      document.getElementById('continueReview')?.addEventListener('click', ()=>{
+        closeModal();
+      });
+      document.getElementById('closeReview')?.addEventListener('click', closeModal);
+      backdrop?.addEventListener('click', closeModal);
+
+      // filter buttons
+      function setFilter(which){
+        [fltAll, fltCostly, fltRecent].forEach(b=>b?.classList.toggle('active', b?.dataset.filter===which));
+        loadReview(which);
+      }
+      fltAll?.addEventListener('click', ()=>setFilter('all'));
+      fltCostly?.addEventListener('click', ()=>setFilter('costly'));
+      fltRecent?.addEventListener('click', ()=>setFilter('recent'));
+
+      // initial sync
+      setItemsLeft();
+      fetchRemaining();
     {% elif stage == 'duel' %}
       setProgress(Math.round(100 * ({{ progress.index }}-1) / {{ progress.total }} ));
     {% elif stage == 'result' %}
@@ -329,14 +569,43 @@
       setProgress(0);
     {% endif %}
 
-    // logout
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn){
-      logoutBtn.addEventListener('click', async ()=>{
-        try{ await fetch('/logout', { method:'POST' }); }catch(e){}
-        location.href = '/auth';
-      });
-    }
+    // profile menu: open on hover (desktop), click fallback on touch
+    (function(){
+      const root = document.getElementById('profile');
+      const btn  = document.getElementById('profileBtn');
+      const menu = document.getElementById('profileMenu');
+      if (!root || !btn || !menu) return;
+
+      let hideTimer = null;
+      function openMenu(){ menu.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+      function closeMenu(){ menu.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+      function scheduleClose(){ clearTimeout(hideTimer); hideTimer = setTimeout(closeMenu, 160); }
+      function cancelClose(){ clearTimeout(hideTimer); }
+
+      const isTouch = window.matchMedia && window.matchMedia('(hover: none)').matches;
+
+      function setExpanded(v){ btn.setAttribute('aria-expanded', String(v)); }
+
+      if (!isTouch){
+        // Desktop: open on hover with delay, keep open while hovering menu
+        root.addEventListener('mouseenter', ()=>{ cancelClose(); openMenu(); });
+        root.addEventListener('mouseleave', scheduleClose);
+        menu.addEventListener('mouseenter', cancelClose);
+        menu.addEventListener('mouseleave', scheduleClose);
+        document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape'){ cancelClose(); closeMenu(); }});
+      } else {
+        // Touch devices: toggle on tap
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          const willOpen = !menu.classList.contains('open');
+          menu.classList.toggle('open', willOpen);
+          setExpanded(willOpen);
+        });
+        document.addEventListener('click', (e)=>{
+          if (!root.contains(e.target)){ menu.classList.remove('open'); setExpanded(false); }
+        });
+      }
+    })();
 
     // --- Drag & Drop TOP5 ---
     {% if stage == 'result' and rows is defined %}
@@ -355,7 +624,7 @@
 
       // Touch-friendly DnD across desktop & mobile
       const sortable = new Sortable(list, {
-        animation: 250,
+        animation: 150,
         handle: '.handle',
         ghostClass: 'ghost',
         dragClass: 'dragging',
@@ -371,7 +640,7 @@
         if (order.length !== 5) { return; }
         try{
           btn?.setAttribute('disabled','disabled');
-          const r = await fetch('/priorities/reorder', {
+          const r = await fetch("{{ url_for('priorities.reorder_top5') }}", {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({order})
