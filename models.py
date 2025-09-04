@@ -35,6 +35,11 @@ class LikertAnswer(db.Model):
     score           = db.Column(db.Integer, nullable=False)
     created_at      = db.Column(db.DateTime, default=datetime.utcnow)
 
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'category', 'statement_index', name='uq_likert_user_cat_idx'),
+        db.Index('ix_likert_user_cat', 'user_id', 'category'),
+    )
+
 class DuelAnswer(db.Model):
     id        = db.Column(db.Integer, primary_key=True)
     user_id   = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
@@ -43,10 +48,20 @@ class DuelAnswer(db.Model):
     chosen    = db.Column(db.String(80), nullable=False)
     created_at= db.Column(db.DateTime, default=datetime.utcnow)
 
+    __table_args__ = (
+        db.Index('ix_duel_user_created', 'user_id', 'created_at'),
+    )
+
 class ResultProfile(db.Model):
     id        = db.Column(db.Integer, primary_key=True)
     user_id   = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     rank      = db.Column(db.Integer, nullable=False)
     category  = db.Column(db.String(80), nullable=False)
-    score     = db.Column(db.Float, nullable=True)  # kombinace (duely + likert)
+    score     = db.Column(db.Float, nullable=True)  # hybrid nebo likert
     created_at= db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'rank', name='uq_result_user_rank'),
+        db.UniqueConstraint('user_id', 'category', name='uq_result_user_category'),
+        db.Index('ix_result_user_rank', 'user_id', 'rank'),
+    )
