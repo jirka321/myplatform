@@ -33,7 +33,7 @@ def _likert_sum(uid):
     """Sum of all Likert scores for the current user (this session-less MVP)."""
     total = (
         db.session.query(func.coalesce(func.sum(LikertAnswer.score), 0))
-        .filter(or_(LikertAnswer.user_id == uid, LikertAnswer.user_id == str(uid)))
+        .filter(LikertAnswer.user_id == int(uid))
         .scalar()
     )
     return int(total or 0)
@@ -70,7 +70,7 @@ def entry():
 
     # ========== FÁZE 1: Likert ==========
     total = get_total_statements_count()
-    answered = LikertAnswer.query.filter(or_(LikertAnswer.user_id == uid, LikertAnswer.user_id == str(uid))).count()
+    answered = LikertAnswer.query.filter(LikertAnswer.user_id == int(uid)).count()
     if answered < total:
         stmt = get_statement_by_progress(answered)
         return render_template(
@@ -88,7 +88,7 @@ def entry():
         )
 
     # ========== Výpočty po Likertu ==========
-    likert_rows = LikertAnswer.query.filter(or_(LikertAnswer.user_id == uid, LikertAnswer.user_id == str(uid))).all()
+    likert_rows = LikertAnswer.query.filter(LikertAnswer.user_id == int(uid)).all()
     score_map = compute_likert_scores(likert_rows)
 
     # 1) TIE-BREAK do TOP10 (duely jen v tie bandu, BEZ gated)
@@ -287,7 +287,7 @@ def answer_likert():
     # Budget validation: sum of all other answers + new score must be <= POOL
     spent_without_this = (
         db.session.query(func.coalesce(func.sum(LikertAnswer.score), 0))
-        .filter(LikertAnswer.user_id == uid)
+        .filter(LikertAnswer.user_id == int(uid))
         .filter(~((LikertAnswer.category == cat) & (LikertAnswer.statement_index == idx)))
         .scalar()
         or 0
@@ -297,11 +297,11 @@ def answer_likert():
         return redirect(url_for("priorities.entry"))
 
     # Upsert: update existing answer for this (category, statement_index), otherwise insert
-    existing = LikertAnswer.query.filter_by(user_id=uid, category=cat, statement_index=idx).first()
+    existing = LikertAnswer.query.filter_by(user_id=int(uid), category=cat, statement_index=idx).first()
     if existing:
         existing.score = score
     else:
-        db.session.add(LikertAnswer(user_id=uid, category=cat, statement_index=idx, score=score))
+        db.session.add(LikertAnswer(user_id=int(uid), category=cat, statement_index=idx, score=score))
     db.session.commit()
     return redirect(url_for("priorities.entry"))
 
@@ -319,7 +319,7 @@ def answer_duel():
         return redirect(url_for("priorities.entry"))
 
     # Volitelné: logovat do DB (audit trail)
-    db.session.add(DuelAnswer(user_id=uid, option_a=a, option_b=b, chosen=chosen))
+    db.session.add(DuelAnswer(user_id=int(uid), option_a=a, option_b=b, chosen=chosen))
     db.session.commit()
 
     # TIE-BREAK fáze?
@@ -375,7 +375,7 @@ def reorder_top5():
     # Nacti aktualni TOP5 z ResultProfile pro daneho usera
     top5 = (
         ResultProfile.query
-        .filter(or_(ResultProfile.user_id == uid, ResultProfile.user_id == str(uid)))
+        .filter(ResultProfile.user_id == int(uid))
         .filter(ResultProfile.rank <= 5)
         .all()
     )
@@ -383,7 +383,7 @@ def reorder_top5():
         # Fallback 1: vezmi prvních 5 podle rank ASC, i kdyby ranky měly díry
         top5_any = (
             ResultProfile.query
-            .filter(or_(ResultProfile.user_id == uid, ResultProfile.user_id == str(uid)))
+            .filter(ResultProfile.user_id == int(uid))
             .order_by(ResultProfile.rank.asc())
             .limit(5)
             .all()
@@ -401,14 +401,14 @@ def reorder_top5():
                     if k not in key_to_label and k in CATEGORIES:
                         key_to_label[k] = CATEGORIES[k]["label"]
                 # smaž existující prvních 5 a vlož nové podle požadovaného order
-                ResultProfile.query.filter(or_(ResultProfile.user_id == uid, ResultProfile.user_id == str(uid))).filter(ResultProfile.rank <= 5).delete(synchronize_session=False)
+                ResultProfile.query.filter(ResultProfile.user_id == int(uid)).filter(ResultProfile.rank <= 5).delete(synchronize_session=False)
                 for idx, key in enumerate(order[:5], start=1):
                     lbl = key_to_label.get(key) or CATEGORIES.get(key, {}).get("label") or key
-                    db.session.add(ResultProfile(user_id=uid, rank=idx, category=lbl, score=0.0))
+                    db.session.add(ResultProfile(user_id=int(uid), rank=idx, category=lbl, score=0.0))
                 db.session.commit()
                 top5 = (
                     ResultProfile.query
-                    .filter(or_(ResultProfile.user_id == uid, ResultProfile.user_id == str(uid)))
+                    .filter(ResultProfile.user_id == int(uid))
                     .filter(ResultProfile.rank <= 5)
                     .order_by(ResultProfile.rank.asc())
                     .all()
@@ -469,7 +469,7 @@ def review_answers():
         return jsonify({"remaining": POOL, "items": []})
 
     costly = request.args.get("costly") in ("1", "true", "yes")
-    q = LikertAnswer.query.filter(or_(LikertAnswer.user_id == uid, LikertAnswer.user_id == str(uid)))
+    q = LikertAnswer.query.filter(LikertAnswer.user_id == int(uid))
     if costly:
         q = q.filter(LikertAnswer.score >= 3)
 
@@ -514,7 +514,7 @@ def adjust_answer():
     # Sum of all except this item
     spent_wo = (
         db.session.query(func.coalesce(func.sum(LikertAnswer.score), 0))
-        .filter(or_(LikertAnswer.user_id == uid, LikertAnswer.user_id == str(uid)))
+        .filter(LikertAnswer.user_id == int(uid))
         .filter(~((LikertAnswer.category == cat) & (LikertAnswer.statement_index == idx)))
         .scalar()
         or 0
@@ -526,13 +526,13 @@ def adjust_answer():
 
     # Upsert the answer
     existing = (LikertAnswer.query
-                .filter(or_(LikertAnswer.user_id == uid, LikertAnswer.user_id == str(uid)))
+                .filter(LikertAnswer.user_id == int(uid))
                 .filter(LikertAnswer.category == cat, LikertAnswer.statement_index == idx)
                 .first())
     if existing:
         existing.score = new_value
     else:
-        db.session.add(LikertAnswer(user_id=uid, category=cat, statement_index=idx, score=new_value))
+        db.session.add(LikertAnswer(user_id=int(uid), category=cat, statement_index=idx, score=new_value))
     db.session.commit()
 
     remaining = POOL - _likert_sum(uid)
@@ -554,9 +554,9 @@ def restart_priorities():
 
     # Wipe user data for a clean start
     try:
-        LikertAnswer.query.filter(or_(LikertAnswer.user_id == uid, LikertAnswer.user_id == str(uid))).delete(synchronize_session=False)
-        DuelAnswer.query.filter(or_(DuelAnswer.user_id == uid, DuelAnswer.user_id == str(uid))).delete(synchronize_session=False)
-        ResultProfile.query.filter(or_(ResultProfile.user_id == uid, ResultProfile.user_id == str(uid))).delete(synchronize_session=False)
+        LikertAnswer.query.filter(LikertAnswer.user_id == int(uid)).delete(synchronize_session=False)
+        DuelAnswer.query.filter(DuelAnswer.user_id == int(uid)).delete(synchronize_session=False)
+        ResultProfile.query.filter(ResultProfile.user_id == int(uid)).delete(synchronize_session=False)
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -573,7 +573,7 @@ def _persist_results(uid: int, rows: list[dict]):
     label_to_key = {v["label"]: k for k, v in CATEGORIES.items()}
 
     existing = (ResultProfile.query
-                .filter(or_(ResultProfile.user_id == uid, ResultProfile.user_id == str(uid)))
+                .filter(ResultProfile.user_id == int(uid))
                 .order_by(ResultProfile.rank.asc())
                 .all())
     if not existing:
@@ -584,7 +584,7 @@ def _persist_results(uid: int, rows: list[dict]):
             if not name:
                 continue
             db.session.add(ResultProfile(
-                user_id=uid,
+                user_id=int(uid),
                 rank=int(r.get("rank", 0) or 0),
                 category=name,
                 score=float(r.get("hybrid", r.get("likert", 0)) or 0.0),
