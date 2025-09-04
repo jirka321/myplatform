@@ -68,6 +68,32 @@ def entry():
     if session.get("force_stage") == "result" and session.get("result_rows"):
         return render_template("test.html", stage="result", rows=session["result_rows"])
 
+    # --- DB-first shortcut: pokud už máme uložené výsledky, zobraz je hned ---
+    stored = (
+        ResultProfile.query
+        .filter(ResultProfile.user_id == int(uid))
+        .order_by(ResultProfile.rank.asc())
+        .all()
+    )
+    if stored:
+        # Přemapuj DB záznamy na strukturu rows očekávanou šablonou
+        # (category_key z labelu; wins nemáme v DB, použijeme 0; likert čteme ze score)
+        label_to_key = {v["label"]: k for k, v in CATEGORIES.items()}
+        rows_from_db = []
+        for rp in stored:
+            key = label_to_key.get(rp.category)
+            rows_from_db.append({
+                "rank": int(rp.rank or 0),
+                "category_label": rp.category,
+                "category_key": key,
+                "wins": 0,
+                "likert": int(rp.score or 0),
+            })
+        # ulož do session, aby fungoval reorder/graf bez dalšího počítání
+        session["result_rows"] = rows_from_db
+        session["force_stage"] = "result"
+        return render_template("test.html", stage="result", rows=rows_from_db)
+
     # ========== FÁZE 1: Likert ==========
     total = get_total_statements_count()
     answered = LikertAnswer.query.filter(LikertAnswer.user_id == int(uid)).count()
