@@ -77,18 +77,34 @@ def entry():
     )
     if stored:
         # Přemapuj DB záznamy na strukturu rows očekávanou šablonou
-        # (category_key z labelu; wins nemáme v DB, použijeme 0; likert čteme ze score)
+        # Likert vždy dopočítáme ze skutečných odpovědí (LikertAnswer),
+        # nikoli z ResultProfile.score (ten může být hybrid/normalizace).
         label_to_key = {v["label"]: k for k, v in CATEGORIES.items()}
+
+        # Součty Likertu podle category KEY pro přihlášeného uživatele
+        likert_sums = dict(
+            db.session.query(
+                LikertAnswer.category,
+                func.coalesce(func.sum(LikertAnswer.score), 0)
+            )
+            .filter(LikertAnswer.user_id == int(uid))
+            .group_by(LikertAnswer.category)
+            .all()
+        )
+
         rows_from_db = []
         for rp in stored:
             key = label_to_key.get(rp.category)
+            # Pokud se label -> key nepodaří mapovat, spadne likert na 0
+            likert_val = int(likert_sums.get(key, 0))
             rows_from_db.append({
                 "rank": int(rp.rank or 0),
                 "category_label": rp.category,
                 "category_key": key,
-                "wins": 0,
-                "likert": int(rp.score or 0),
+                "wins": 0,            # výhry duelů v DB neevidujeme
+                "likert": likert_val, # skutečný součet z LikertAnswer
             })
+
         # ulož do session, aby fungoval reorder/graf bez dalšího počítání
         session["result_rows"] = rows_from_db
         session["force_stage"] = "result"
