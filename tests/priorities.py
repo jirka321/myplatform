@@ -92,6 +92,17 @@ def entry():
             .all()
         )
 
+        # Výhry z duelů dopočítáme z tabulky DuelAnswer (počet záznamů, kde byl 'chosen' = daný key)
+        wins_map = dict(
+            db.session.query(
+                DuelAnswer.chosen,
+                func.count()
+            )
+            .filter(DuelAnswer.user_id == int(uid))
+            .group_by(DuelAnswer.chosen)
+            .all()
+        )
+
         rows_from_db = []
         for rp in stored:
             key = label_to_key.get(rp.category)
@@ -101,7 +112,7 @@ def entry():
                 "rank": int(rp.rank or 0),
                 "category_label": rp.category,
                 "category_key": key,
-                "wins": 0,            # výhry duelů v DB neevidujeme
+                "wins": int(wins_map.get(key, 0)),  # skutečné počty výher z DuelAnswer
                 "likert": likert_val, # skutečný součet z LikertAnswer
             })
 
