@@ -91,7 +91,7 @@ def auth_page():
   </style>
 </head>
 <body>
-  <div class="page-logo">MYPRIORITIES</div>
+  <div class="page-logo">PROTOKOL</div>
   <div class="bg"></div>
   <div class="wrap">
     <div class="glass">
@@ -140,6 +140,22 @@ def auth_page():
 
 # ---------- helpers ----------
 
+# Clear all Priorities-related session keys (flow state)
+def clear_priorities_session():
+    for k in (
+        "top10_ids",
+        "tb_state",
+        "tb_slots",
+        "tb_guaranteed",
+        "top_duel_state",
+        "priorities_progress",
+        "priorities_stage",
+        # keys used by priorities blueprint to lock Result screen
+        "result_rows",
+        "force_stage",
+    ):
+        session.pop(k, None)
+
 def get_current_user():
     uid = session.get("user_id")
     if not uid:
@@ -164,6 +180,7 @@ def register_api():
         return jsonify({"error":"Email už existuje"}), 400
     u = User(email=email, password=password)
     db.session.add(u); db.session.commit()
+    clear_priorities_session()
     session["user_id"] = u.id
     return jsonify({"message":"Registrace OK", "user_id":u.id})
 
@@ -173,6 +190,7 @@ def login_api():
     email = data.get("email"); password = data.get("password")
     u = User.query.filter_by(email=email).first()
     if u and u.password == password:
+        clear_priorities_session()
         session["user_id"] = u.id
         return jsonify({"message":"Login OK", "user_id":u.id})
     return jsonify({"error":"Špatný email nebo heslo"}), 401
@@ -186,9 +204,11 @@ def api_register_alias():
 def api_login_alias():
     return login_api()
 
+
 @app.route("/logout", methods=["POST"])
 def logout_api():
     session.clear()
+    clear_priorities_session()
     return jsonify({"message":"Odhlášeno"})
 
 # ---------- ADMIN PREHLED (chráněný) ----------
