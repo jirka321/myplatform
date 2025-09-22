@@ -2,148 +2,207 @@
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional
 
-# 20 kategorií × 5 výroků – ponecháme strukturu a texty
 CATEGORIES = {
-    "c1": {"label":"Přínos druhým / smysl práce","statements":[
-        "Moje práce má pozitivní dopad na životy jiných lidí.",
-        "Cítím se nejlépe, když můžu někomu pomoct.",
-        "Je pro mě důležité vidět, že má činnost konkrétní výsledky pro druhé.",
-        "Úspěch mě těší hlavně tehdy, když prospívá i jiným.",
-        "Cítím odpovědnost přispívat k lepšímu světu."
-    ]},
-    "c2": {"label":"Finance a majetek","statements":[
-        "Peníze jsou pro mě důležitým měřítkem úspěchu.",
-        "Mám rád/a pocit finanční jistoty a stability.",
-        "Usiluji o zvyšování svého příjmu.",
-        "Materiální zabezpečení mi dává svobodu volby.",
-        "Rád/a investuji do věcí, které zvyšují moji hodnotu."
-    ]},
-    "c3": {"label":"Cestování a poznávání","statements":[
-        "Cestování je pro mě zdroj energie a inspirace.",
-        "Láká mě objevovat nové kultury a prostředí.",
-        "Když dlouho necestuji, cítím, že mi něco chybí.",
-        "Preferuji utrácení za zážitky před hmotnými věcmi.",
-        "Rád/a poznávám lidi z různých koutů světa."
-    ]},
-    "c4": {"label":"Osobní rozvoj a vzdělávání","statements":[
-        "Neustále se snažím zlepšovat své dovednosti.",
-        "Rád/a se učím nové věci, i když nejsou přímo k práci.",
-        "Vzdělávání je pro mě dlouhodobá životní hodnota.",
-        "Baví mě překonávat své limity v učení.",
-        "Cítím radost, když se mi podaří osvojit novou dovednost."
-    ]},
-    "c5": {"label":"Partnerské vztahy","statements":[
-        "Partnerský vztah je pro mě klíčovým zdrojem štěstí.",
-        "Potřebuji mít po boku blízkého člověka.",
-        "Kvalita mého vztahu ovlivňuje můj celkový životní pocit.",
-        "Jsem ochoten/ochotna obětovat jiné věci pro udržení vztahu.",
-        "Sdílení života s partnerem je pro mě prioritou."
-    ]},
-    "c6": {"label":"Rodina a děti","statements":[
-        "Rodina je pro mě na prvním místě.",
-        "Rád/a trávím čas s rodinou, i když je to na úkor práce.",
-        "Chci vytvářet dobré podmínky pro život svých blízkých.",
-        "Rodinné tradice jsou pro mě důležité.",
-        "Cítím odpovědnost za podporu své rodiny."
-    ]},
-    "c7": {"label":"Zdraví a fyzická kondice","statements":[
-        "Pečuji o své fyzické zdraví.",
-        "Pohyb je pro mě důležitou součástí života.",
-        "Vyhýbám se návykům, které škodí zdraví.",
-        "Dobrý zdravotní stav považuji za základ spokojenosti.",
-        "Sleduji svůj životní styl a snažím se ho zlepšovat."
-    ]},
-    "c8": {"label":"Duševní pohoda / vnitřní klid","statements":[
-        "Hledám způsoby, jak zůstat vnitřně vyrovnaný/á.",
-        "Potřebuji mít dostatek času na odpočinek.",
-        "Umím si vytvořit prostor pro sebe.",
-        "Vyhýbám se zbytečnému stresu.",
-        "Klid a harmonie jsou pro mě zásadní."
-    ]},
-    "c9": {"label":"Kariérní úspěch","statements":[
-        "Chci dosáhnout vysoké pozice ve svém oboru.",
-        "Toužím po uznání v profesní komunitě.",
-        "Cíleně pracuji na své kariérní dráze.",
-        "Úspěch v práci mi přináší pocit hrdosti.",
-        "Měřím svůj pokrok podle profesních úspěchů."
-    ]},
-    "c10": {"label":"Prestiž a společenské postavení","statements":[
-        "Záleží mi na tom, jak mě vnímají ostatní.",
-        "Prestižní status je pro mě motivací.",
-        "Rád/a jsem spojován/a s úspěšnými lidmi.",
-        "Společenské uznání mě povzbuzuje.",
-        "Značky a symboly úspěchu pro mě mají význam."
-    ]},
-    "c11": {"label":"Kreativita a sebevyjádření","statements":[
-        "Potřebuji prostor pro svou tvořivost.",
-        "Vytváření nových věcí mě naplňuje.",
-        "Baví mě hledat originální řešení.",
-        "Umělecké nebo kreativní činnosti jsou pro mě důležité.",
-        "Kreativní proces mi dává pocit svobody."
-    ]},
-    "c12": {"label":"Dobré mezilidské vztahy","statements":[
-        "Mám rád/a přátelské pracovní prostředí.",
-        "Oceňuji, když mě lidé respektují a podporují.",
-        "Snažím se být dobrým kolegou/kamarádem.",
-        "Spokojenost ve vztazích zvyšuje moji životní pohodu.",
-        "Dobrá atmosféra je pro mě důležitější než výše platu."
-    ]},
-    "c13": {"label":"Volný čas a koníčky","statements":[
-        "Potřebuji mít čas na své koníčky.",
-        "Záliby jsou pro mě zdrojem radosti.",
-        "Práce by mi neměla brát všechen volný čas.",
-        "Trávím čas aktivitami, které mě baví.",
-        "Vyhrazený čas pro koníčky považuji za nutnost."
-    ]},
-    "c14": {"label":"Spiritualita / víra","statements":[
-        "Duchovní život je pro mě důležitý.",
-        "Víra mi pomáhá zvládat těžké situace.",
-        "Potřebuji mít prostor pro duchovní praktiky.",
-        "Hledám smysl svého života.",
-        "Spirituální hodnoty mě ovlivňují při rozhodování."
-    ]},
-    "c15": {"label":"Stabilita a jistota","statements":[
-        "Mám rád/a, když vím, co mě čeká.",
-        "Vyhýbám se zbytečným rizikům.",
-        "Stabilní prostředí mi dodává klid.",
-        "Nerad/a měním zaběhnuté pořádky.",
-        "Jistota zaměstnání je pro mě klíčová."
-    ]},
-    "c16": {"label":"Dobrodružství a nové zkušenosti","statements":[
-        "Vyhledávám nové a neznámé situace.",
-        "Baví mě zkoušet věci, které jsem ještě nedělal/a.",
-        "Adrenalinové zážitky mi přinášejí radost.",
-        "Rutina mě rychle unaví.",
-        "Život má být plný překvapení a změn."
-    ]},
-    "c17": {"label":"Svoboda a nezávislost","statements":[
-        "Potřebuji možnost rozhodovat o svém čase.",
-        "Nemám rád/a, když mě někdo příliš kontroluje.",
-        "Svoboda volby je pro mě důležitější než vysoký plat.",
-        "Chci mít možnost dělat věci po svém.",
-        "Oceňuji flexibilitu v práci i osobním životě."
-    ]},
-    "c18": {"label":"Pomoc komunitě / dobrovolnictví","statements":[
-        "Chci být prospěšný/á své komunitě.",
-        "Dobrovolnická práce mě naplňuje.",
-        "Baví mě organizovat akce pro ostatní.",
-        "Pomoc lidem v nouzi považuji za svou povinnost.",
-        "Rád/a se zapojuji do projektů, které zlepšují okolí."
-    ]},
-    "c19": {"label":"Pohodlný životní standard","statements":[
-        "Oceňuji komfortní bydlení a prostředí.",
-        "Mám rád/a kvalitní vybavení a služby.",
-        "Pohodlí pro mě znamená vyšší kvalitu života.",
-        "Jsem ochoten/ochotna investovat do pohodlí.",
-        "Příjemné prostředí zlepšuje moji náladu."
-    ]},
-    "c20": {"label":"Vliv a možnost rozhodovat","statements":[
-        "Rád/a ovlivňuji důležitá rozhodnutí.",
-        "Chci mít slovo v tom, jak se věci dělají.",
-        "Líbí se mi vést lidi nebo projekty.",
-        "Mám rád/a, když druzí naslouchají mému názoru.",
-        "Možnost rozhodovat mi dává pocit odpovědnosti a síly."
-    ]},
+  "family": {
+    "label": "Rodina a děti",
+    "statements": [
+      "Trávit pravidelný čas s rodinou každý týden",
+      "Být dostupný/dostupná, když mě rodina potřebuje",
+      "Plánovat společné zážitky (výlet, víkend)",
+      "Podporovat vzdělání a rozvoj dětí",
+      "Udržovat rodinné rituály a tradice"
+    ]
+  },
+  "relationship": {
+    "label": "Partnerství",
+    "statements": [
+      "Mít s partnerem kvalitní společný čas bez rušivých vlivů",
+      "Otevřeně mluvit o důležitých tématech",
+      "Pracovat na společných cílech",
+      "Udržovat intimitu a blízkost",
+      "Společně plánovat budoucnost"
+    ]
+  },
+  "friends": {
+    "label": "Přátelé",
+    "statements": [
+      "Pravidelné setkání s blízkými přáteli",
+      "Budovat nové smysluplné vztahy",
+      "Být oporou, když přátelé něco řeší",
+      "Udržovat kontakt i na dálku",
+      "Mít přátele s podobnými hodnotami"
+    ]
+  },
+  "health": {
+    "label": "Zdraví",
+    "statements": [
+      "Pravidelné preventivní prohlídky",
+      "Kvalitní spánek a režim",
+      "Vyvážená strava ve většině dní",
+      "Sledovat a řídit stres",
+      "Denní pohyb alespoň v lehké intenzitě"
+    ]
+  },
+  "fitness": {
+    "label": "Fyzická kondice",
+    "statements": [
+      "Tréninkový plán a jeho dodržování",
+      "Zvyšovat fyzickou výkonnost (síla/vytrvalost)",
+      "Aktivní víkendy (turistika, kolo, sport)",
+      "Regenerace a flexibilita (střetch, masáže)",
+      "Mít jasný cíl (závod, počet tréninků)"
+    ]
+  },
+  "mind": {
+    "label": "Mentální pohoda",
+    "statements": [
+      "Pravidelná relaxace/meditace",
+      "Mít vyvážený kalendář (nepřetěžovat se)",
+      "Hranice vůči práci a lidem",
+      "Vědomá práce s emocemi",
+      "Čas jen pro sebe každý týden"
+    ]
+  },
+  "career": {
+    "label": "Kariéra",
+    "statements": [
+      "Posun na zodpovědnější roli",
+      "Práce, která dává smysl",
+      "Učit se dovednosti pro další krok",
+      "Viditelnost výsledků (prezentace, networking)",
+      "Mentor/mentoring v práci"
+    ]
+  },
+  "business": {
+    "label": "Podnikání",
+    "statements": [
+      "Jasný produkt/nabídka a její zlepšování",
+      "Stálý přísun nových klientů/leadů",
+      "Finanční plán a cashflow",
+      "Automatizace a škálovatelnost",
+      "Značka a marketing, který funguje"
+    ]
+  },
+  "finance": {
+    "label": "Finance",
+    "statements": [
+      "Tvořit rezervu (3–6 měsíců výdajů)",
+      "Pravidelně investovat",
+      "Mít pod kontrolou měsíční rozpočet",
+      "Snižovat zbytečné výdaje",
+      "Plán větších nákladů (dovolená, rekonstrukce)"
+    ]
+  },
+  "learning": {
+    "label": "Učení a nové dovednosti",
+    "statements": [
+      "Každý týden řízené učení (kurz/knížka)",
+      "Procvičování a projekty místo pasivního čtení",
+      "Sledovat pokrok a cíle učení",
+      "Zpětná vazba od někoho zkušenějšího",
+      "Učení, které zlepší práci/byznys"
+    ]
+  },
+  "creativity": {
+    "label": "Kreativita",
+    "statements": [
+      "Pravidelný prostor na tvoření",
+      "Dokončovat malé kreativní projekty",
+      "Sdílet tvorbu s publikem",
+      "Zkoušet nové formy/techniky",
+      "Mít dlouhodobý kreativní cíl"
+    ]
+  },
+  "freedom": {
+    "label": "Svoboda a cestování",
+    "statements": [
+      "Možnost pracovat odkudkoli",
+      "Plánovat delší cesty/expedice",
+      "Rozpočet na cestování",
+      "Žít jednoduše (málo věcí, flexibilita)",
+      "Mít čas neplánovat a improvizovat"
+    ]
+  },
+  "home": {
+    "label": "Domov a prostředí",
+    "statements": [
+      "Mít doma klidný a hezký prostor",
+      "Udržovat pořádek bez námahy (systémy)",
+      "Vybavení, které šetří čas",
+      "Domácí rituály (vaření, snídaně)",
+      "Mít pracovní zónu oddělenou od odpočinku"
+    ]
+  },
+  "order": {
+    "label": "Organizace a pořádek",
+    "statements": [
+      "Jasné priority týdne",
+      "Systém úkolů, který dodržuju",
+      "Timeboxing a hluboká práce",
+      "Pravidelný týdenní/denní review",
+      "Minimalizovat kontext-switching"
+    ]
+  },
+  "impact": {
+    "label": "Dopad a smysl",
+    "statements": [
+      "Dělat práci, která někomu reálně pomáhá",
+      "Dobrovolnictví/charitativní přínos",
+      "Tvořit věci, které přetrvají",
+      "Využít své silné stránky pro druhé",
+      "Žít v souladu s vlastními hodnotami"
+    ]
+  },
+  "community": {
+    "label": "Komunita a sítě",
+    "statements": [
+      "Být součástí aktivní komunity",
+      "Přispívat zkušenostmi/znalostmi",
+      "Chodit na akce a potkávat nové lidi",
+      "Budovat kvalitní profesní síť",
+      "Spolupráce na projektech s ostatními"
+    ]
+  },
+  "leisure": {
+    "label": "Zábava a volný čas",
+    "statements": [
+      "Mít v týdnu lehkost a spontánnost",
+      "Pravidelně se bavit (hry, kultura, sport)",
+      "Vypnout hlavu bez výčitek",
+      "Výlety a mikro-dobrodružství",
+      "Hobby, které mě nabíjí"
+    ]
+  },
+  "spirituality": {
+    "label": "Spiritualita / přesah",
+    "statements": [
+      "Mít čas na vnitřní reflexi",
+      "Rituály, které mi dávají smysl",
+      "Číst/učit se o filozofii, spiritualitě",
+      "Být v kontaktu s přírodou",
+      "Dělat věci, které podporují vděčnost"
+    ]
+  },
+  "growth": {
+    "label": "Osobní růst",
+    "statements": [
+      "Pracovat na slepých místech a zvycích",
+      "Stanovovat a plnit osobní cíle",
+      "Pravidelný coaching/terapie/mentoring",
+      "Reflexe týdne a učení z chyb",
+      "Překračovat komfortní zónu"
+    ]
+  },
+  "productivity": {
+    "label": "Produktivita a výsledky",
+    "statements": [
+      "Každý den udělat to nejdůležitější",
+      "Měřit dopad, ne jen činnost",
+      "Automatizovat opakované věci",
+      "Eliminovat rušiče a hluk",
+      "Dodržovat závazky včas"
+    ]
+  }
 }
 
 LIKERT_MIN, LIKERT_MAX = 1, 4
@@ -158,7 +217,7 @@ def get_all_statements():
                 "category_key": key,
                 "category_label": cat["label"],
                 "statement_index": i + 1,
-                "text": txt,
+                "text": f"{txt} – je aktuálně:",
             })
     return out
 
