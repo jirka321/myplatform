@@ -17,126 +17,19 @@ init_db(app)
 # ---------- rozcestník ----------
 @app.route("/")
 def home():
-    return """
-    <h1>MyPlatform</h1>
-    <p>Server běží.</p>
-    <p><a href='/auth'>Přihlásit / Registrovat</a></p>
-    <p><a href='/priorities/'>Priorities test</a> (vyžaduje přihlášení)</p>
-    """
+    # Landing page is now a standalone template
+    return render_template("lp.html")
 
 # ---------- AUTH PAGE ----------
 @app.route("/auth", methods=["GET"])
 def auth_page():
-    return """
-<!doctype html>
-<html lang="cs">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Přihlášení / Registrace</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --text:#0f1a24;
-      --muted:#4b6b88;
-      --border:rgba(0,0,0,.08);
-      --accent-a:#0090ff;
-      --accent-b:#26b0ff;
-    }
+    # Legacy path kept for backward compatibility
+    return redirect(url_for("login_page"))
 
-    html,body{height:100%}
-    body{ margin:0; background:#ffffff; color:var(--text); font-family:"Work Sans", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial; overflow-x:hidden; }
-
-    .bg{ position:fixed; inset:-20vh -20vw -20vh -20vw; pointer-events:none; z-index:0; overflow:hidden; }
-    .bg::before{ content:""; position:absolute; width:82vmin; height:82vmin; left:50%; top:46%; transform:translate(-50%,-50%); background:radial-gradient(circle at 50% 50%, rgba(0,185,255,.44) 0%, rgba(92,122,255,.40) 33%, rgba(255,120,200,.30) 58%, rgba(0,0,0,0) 72%); filter: blur(120px); opacity:.92; }
-    .bg::after{ content:""; position:absolute; width:48vmin; height:48vmin; left:50%; top:46%; transform:translate(-50%,-50%); background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.80) 0%, rgba(255,255,255,.0) 60%); filter: blur(30px); opacity:.9; }
-
-    .wrap{ position:relative; z-index:1; min-height:100%; display:flex; align-items:center; justify-content:center; padding:6vh 4vw; }
-    .glass{ width:min(560px, 100%); border-radius:20px; background: transparent; border: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
-    .card{ padding:18px 20px; border:1px solid rgba(0,0,0,.06); border-radius:18px; background:rgba(255,255,255,.65); box-shadow:0 8px 22px rgba(15,27,36,.07); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); }
-
-    header{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; border-bottom:1px solid var(--border) }
-    .brand{ display:flex; align-items:center; gap:10px; font-family:'Quicksand', sans-serif; font-weight:800; letter-spacing:.4px; }
-    .pill{ border:1px solid rgba(0,120,255,.18); background:rgba(0,120,255,.08); border-radius:999px; padding:6px 12px; font-size:12px; color:#0f3555; }
-
-    main{ padding:22px 22px 26px }
-    h1{ font-family:'Quicksand', sans-serif; margin:0 0 8px; font-size:28px }
-    .kicker{ color:var(--muted); font-size:14px; margin-bottom:16px }
-
-    .row{ margin:10px 0 }
-    input{
-      width: calc(100% - 20px);
-      max-width: 500px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(15,27,36,.10);
-      background: #fff;
-      color: #0f1a24;
-      outline: none;
-      display: block;
-      margin: 0 auto;
-      box-shadow:0 1px 0 rgba(15,27,36,.04);
-    }
-    input::placeholder{ color:#5d7b96 }
-
-    .controls{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px }
-    .btn{ border:none; padding:12px 18px; border-radius:999px; font-family:'Quicksand', sans-serif; font-weight:800; cursor:pointer; }
-    .btn.primary{ color:#00150b; background:linear-gradient(90deg, var(--accent-a), var(--accent-b)); }
-    .btn.secondary{ background:#fff; border:1px solid rgba(15,27,36,.12); color:#0f1a24 }
-    .msg{ font-size:13px; color:#b04a2a; min-height:18px }
-
-    .page-logo { position: fixed; top: 20px; left: 24px; font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 23px; letter-spacing: 1px; color: #0f1a24; text-transform: uppercase; z-index: 10; }
-  </style>
-</head>
-<body>
-  <div class="page-logo">PROTOKOL</div>
-  <div class="bg"></div>
-  <div class="wrap">
-    <div class="glass">
-      <div class="card">
-        <header>
-          <div class="brand"><span class="pill">UX</span><span class="pill">UI</span><span>&nbsp;AUTH</span></div>
-          <div><a href="/" style="color:#0f3555;text-decoration:none;font-size:14px">Domů</a></div>
-        </header>
-        <main>
-          <h1>Přihlášení / Registrace</h1>
-          <div class="kicker">Po úspěchu tě hned pošlu na Priorities test.</div>
-
-          <div class="row"><input id="email" type="email" placeholder="Email"></div>
-          <div class="row"><input id="password" type="password" placeholder="Heslo"></div>
-
-          <div class="controls">
-            <button class="btn secondary" id="btn-login">Přihlásit</button>
-            <button class="btn primary" id="btn-register">Registrovat</button>
-          </div>
-
-          <div class="row msg" id="msg"></div>
-          <div class="kicker">Nebo pokračuj na <a href="/priorities/" style="color:#0f3555">/priorities/</a> pokud už máš session.</div>
-        </main>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const $ = s => document.querySelector(s);
-    async function call(url, body) {
-      try {
-        const r = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) });
-        const j = await r.json();
-        if (j.message) { location.href = "/priorities/"; }
-        else { $("#msg").textContent = j.error || "Chyba"; }
-      } catch(e) {
-        $("#msg").textContent = "Server nedostupný";
-      }
-    }
-    $("#btn-login").onclick = () => call("/login", { email: $("#email").value.trim(), password: $("#password").value.trim() });
-    $("#btn-register").onclick = () => call("/register", { email: $("#email").value.trim(), password: $("#password").value.trim() });
-  </script>
-</body>
-</html>
-"""
+@app.route("/login", methods=["GET"])
+def login_page():
+    # Render the standalone login template
+    return render_template("login.html", show_home=True)
 
 # ---------- helpers ----------
 
@@ -206,10 +99,10 @@ def api_login_alias():
 
 
 @app.route("/logout", methods=["POST"])
-def logout_api():
+def logout():
     session.clear()
     clear_priorities_session()
-    return jsonify({"message":"Odhlášeno"})
+    return redirect(url_for("login_page"))
 
 # ---------- ADMIN PREHLED (chráněný) ----------
 @app.route("/admin")
@@ -296,6 +189,11 @@ def admin_user_detail(user_id):
     </section>
     """
 
+# ---------- pretty URL for standalone results ----------
+@app.route('/results', methods=['GET'])
+def results_redirect():
+    # Redirect to the blueprint's results page
+    return redirect(url_for('priorities.standalone_results'))
 # ---------- zaregistruj test jako modul ----------
 app.register_blueprint(priorities_bp, url_prefix="/priorities")
 
