@@ -16,7 +16,7 @@ from .priorities_logic import (
 import base64, pickle
 
 # --- Budget settings (each Likert score costs its value) ---
-POOL = 280  # total points available in Likert phase
+POOL = 200  # total points available in Likert phase
 LAMBDA_HYBRID = 0.5  # váha pro hybrid (Likert kotva vs. síla duelů)
 
 # --- Helpers pro (de)serializaci duelových stavů do session ---
@@ -62,13 +62,29 @@ def entry():
     """Jedna šablona, která zobrazí to, co ji pošleme (stage=auth/likert/duel/result)."""
     uid = session.get("user_id")
     if not uid:
-        return render_template("test.html", stage="auth")
+        return render_template("likert.html", stage="auth")
 
-    # Pokud už máme hotové výsledky a lock na result, rovnou renderuj
+    # --- Pending hint (welcome/after5/after20/after50) ---
+    pending = session.get("pending_hint")
+    if not pending:
+        # Show welcome ONLY when the test truly starts (no answers yet)
+        total_answered = (
+            db.session.query(func.count())
+            .select_from(LikertAnswer)
+            .filter(LikertAnswer.user_id == int(uid))
+            .scalar()
+        ) or 0
+        if total_answered == 0 and not session.get("seen_welcome"):
+            pending = "welcome"
+            session["pending_hint"] = pending
+    if pending:
+        return render_template("likert.html", stage="hint", hint_type=pending)
+
+    # Pokud už máme hotové výsledky a lock na result, rovnou redirect na results
     if session.get("force_stage") == "result" and session.get("result_rows"):
-        return render_template("test.html", stage="result", rows=session["result_rows"])
+        return redirect(url_for('priorities.standalone_results'))
 
-    # --- DB-first shortcut: pokud už máme uložené výsledky, zobraz je hned ---
+    # --- DB-first shortcut: pokud už máme uložené výsledky, redirect na results ---
     stored = (
         ResultProfile.query
         .filter(ResultProfile.user_id == int(uid))
@@ -119,7 +135,7 @@ def entry():
         # ulož do session, aby fungoval reorder/graf bez dalšího počítání
         session["result_rows"] = rows_from_db
         session["force_stage"] = "result"
-        return render_template("test.html", stage="result", rows=rows_from_db)
+        return redirect(url_for('priorities.standalone_results'))
 
     # ========== FÁZE 1: Likert ==========
     total = get_total_statements_count()
@@ -127,7 +143,7 @@ def entry():
     if answered < total:
         stmt = get_statement_by_progress(answered)
         return render_template(
-            "test.html",
+            "likert.html",
             stage="likert",
             progress={"index": answered + 1, "total": total},
             data={
@@ -172,7 +188,7 @@ def entry():
             # DŮLEŽITÉ: uložit engine se `cur` po next_pair
             session["tb_state"] = _dumps(engine)
             return render_template(
-                "test.html",
+                "duel.html",
                 stage="duel",
                 progress={"index": engine.comparisons + 1, "total": engine.comparisons + 6},
                 data={
@@ -205,7 +221,7 @@ def entry():
             # uložit engine s nastaveným `cur`
             session["tb_state"] = _dumps(engine)
             return render_template(
-                "test.html",
+                "duel.html",
                 stage="duel",
                 progress={"index": engine.comparisons + 1, "total": engine.comparisons + 6},
                 data={
@@ -233,7 +249,7 @@ def entry():
             # uložit engine s nastaveným `cur`
             session["top_duel_state"] = _dumps(engine)
             return render_template(
-                "test.html",
+                "duel.html",
                 stage="duel",
                 progress={"index": engine.comparisons + 1, "total": engine.comparisons + 12},
                 data={
@@ -285,7 +301,7 @@ def entry():
         session.pop("tb_slots", None)
         session.pop("tb_guaranteed", None)
 
-        return render_template("test.html", stage="result", rows=session["result_rows"])
+        return redirect(url_for('priorities.standalone_results'))
 
     # Bezpečný fallback: ukaž všech 20 podle Likertu (bez duelů), a zamkni result
     all_ids = list(CATEGORIES.keys())
@@ -314,7 +330,7 @@ def entry():
     } for r in full_rows]
     session["force_stage"] = "result"
 
-    return render_template("test.html", stage="result", rows=session["result_rows"])
+    return redirect(url_for('priorities.standalone_results'))
 
 
 # ===================== ANSWERS =====================
@@ -356,6 +372,19 @@ def answer_likert():
     else:
         db.session.add(LikertAnswer(user_id=int(uid), category=cat, statement_index=idx, score=score))
     db.session.commit()
+    # --- Milestone hints at 5 / 20 / 50 total answered items ---
+    total_answered = (
+        db.session.query(func.count())
+        .select_from(LikertAnswer)
+        .filter(LikertAnswer.user_id == int(uid))
+        .scalar()
+    ) or 0
+    if total_answered in (5, 20, 50):
+        key = 'after5' if total_answered == 5 else ('after20' if total_answered == 20 else 'after50')
+        if not session.get(f'seen_{key}'):
+            session['pending_hint'] = key
+            return redirect(url_for('priorities.entry'))
+
     return redirect(url_for("priorities.entry"))
 
 
@@ -510,6 +539,113 @@ def reorder_top5():
     return jsonify({"message": "Pořadí bylo uloženo"})
 
 
+# ===================== REORDER ALL (1..N) =====================
+@bp.route("/reorder-all", methods=["POST"])
+def reorder_all():
+    """
+    Reorder the full ranking (typically 1..20) based on a provided list of category KEYS.
+    Expects JSON: { "order": ["career","health", ...] } with all category keys in desired order.
+    Updates ResultProfile ranks and keeps session["result_rows"] in sync.
+    """
+    uid = session.get("user_id")
+    if not uid:
+        return jsonify({"error": "Nejste přihlášen"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    order = payload.get("order")
+
+    # Basic validation
+    if not isinstance(order, list) or not all(isinstance(k, str) for k in order):
+        return jsonify({"error": "Očekávám pole 'order' s klíči kategorií"}), 400
+
+    # Require full set match (all defined categories)
+    all_keys = list(CATEGORIES.keys())
+    if len(order) != len(all_keys):
+        return jsonify({"error": f"Musí být přesně {len(all_keys)} kategorií"}), 400
+    if set(order) != set(all_keys):
+        return jsonify({"error": "Sada klíčů neodpovídá všem kategoriím (1..N)" }), 400
+
+    # Map keys -> labels
+    try:
+        labels_in_order = [CATEGORIES[k]["label"] for k in order]
+    except KeyError:
+        return jsonify({"error": "Neznámý klíč kategorie v 'order'"}), 400
+
+    # Load user's current ResultProfile rows; if none, attempt to bootstrap from session["result_rows"]
+    rows_db = (
+        ResultProfile.query
+        .filter(ResultProfile.user_id == int(uid))
+        .order_by(ResultProfile.rank.asc())
+        .all()
+    )
+
+    if not rows_db:
+        # Bootstrap from session if possible
+        sess_rows = session.get("result_rows") or []
+        if len(sess_rows) != len(all_keys):
+            return jsonify({"error": "Výsledky nejsou připravené k přeskupení"}), 400
+        # (Re)create DB snapshot from session with temporary ranks
+        ResultProfile.query.filter(ResultProfile.user_id == int(uid)).delete(synchronize_session=False)
+        for i, key in enumerate(all_keys, start=1):
+            lbl = CATEGORIES[key]["label"]
+            db.session.add(ResultProfile(user_id=int(uid), rank=i, category=lbl, score=0.0))
+        db.session.commit()
+        rows_db = (
+            ResultProfile.query
+            .filter(ResultProfile.user_id == int(uid))
+            .order_by(ResultProfile.rank.asc())
+            .all()
+        )
+
+    # Verify that the label set matches expected categories
+    current_labels = {rp.category for rp in rows_db}
+    if set(labels_in_order) != current_labels:
+        return jsonify({"error": "Sada kategorií v DB nesouhlasí s požadovaným pořadím"}), 400
+
+    # Remap by label for quick access
+    by_label = {rp.category: rp for rp in rows_db}
+
+    try:
+        # 1) Temporarily move ranks out of the way to avoid unique collisions
+        for idx, lbl in enumerate(labels_in_order, start=1):
+            by_label[lbl].rank = 100 + idx
+        db.session.flush()
+        # 2) Assign final ranks 1..N according to provided order
+        for idx, lbl in enumerate(labels_in_order, start=1):
+            by_label[lbl].rank = idx
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "DB update selhal", "detail": str(e)}), 500
+
+    # Keep session rows in sync if present
+    sess_rows = session.get("result_rows") or []
+    if sess_rows:
+        # Build a map key -> row
+        key_to_row = {r.get("category_key"): r for r in sess_rows if r.get("category_key")}
+        new_rows = [key_to_row.get(k) for k in order if k in key_to_row]
+        # If we couldn't map (e.g., session lacks keys), rebuild minimal rows from labels
+        if len(new_rows) != len(all_keys):
+            new_rows = []
+            for k in order:
+                new_rows.append({
+                    "rank": 0,
+                    "category_label": CATEGORIES[k]["label"],
+                    "category_key": k,
+                    "wins": 0,
+                    "likert": 0,
+                })
+        # Re-rank 1..N
+        for i, r in enumerate(new_rows, start=1):
+            if r is None:
+                continue
+            r["rank"] = i
+        session["result_rows"] = new_rows
+
+    session["force_stage"] = "result"
+    return jsonify({"message": "Celkové pořadí bylo uloženo"})
+
+
 # ===================== REVIEW & ADJUST =====================
 @bp.get("/review")
 def review_answers():
@@ -614,6 +750,10 @@ def restart_priorities():
     except Exception:
         db.session.rollback()
 
+    # Reset hint/session flags so intro appears again on a fresh start
+    session.pop('pending_hint', None)
+    for k in ('seen_welcome','seen_after5','seen_after20','seen_after50'):
+        session.pop(k, None)
     return redirect(url_for("priorities.entry"))
 
 # ===================== INTERNAL: persist results =====================
@@ -654,3 +794,71 @@ def _persist_results(uid: int, rows: list[dict]):
                 by_rank[rank].category = name
                 by_rank[rank].score = float(r.get("hybrid", r.get("likert", 0)) or 0.0)
         db.session.commit()
+
+# ===================== HINT CONTINUE =====================
+
+@bp.route('/hint_continue', methods=['POST'])
+def hint_continue():
+    uid = session.get('user_id')
+    if not uid:
+        return redirect(url_for('priorities.entry'))
+    h = request.form.get('hint_type', '')
+    if h in ('welcome','after5','after20','after50'):
+        session[f'seen_{h}'] = True
+    session.pop('pending_hint', None)
+    return redirect(url_for('priorities.entry'))
+
+
+# ===================== STANDALONE RESULTS PAGE =====================
+@bp.route('/results', methods=['GET'])
+def standalone_results():
+    """
+    Samostatná výsledková stránka: rendruje `results.html` se stejnými daty jako stage="result".
+    Použije session['result_rows'], jinak fallback do DB (ResultProfile) pro aktuálního uživatele,
+    včetně doplnění likert součtů a duelových výher pro správné `data-score` ve view.
+    """
+    uid = session.get('user_id')
+    if not uid:
+        return redirect(url_for('priorities.entry'))
+
+    rows = session.get('result_rows')
+    if not rows:
+        # Fallback: načíst snapshot z DB a dopočítat likert + wins
+        stored = (
+            ResultProfile.query
+            .filter(ResultProfile.user_id == int(uid))
+            .order_by(ResultProfile.rank.asc())
+            .all()
+        )
+        if stored:
+            label_to_key = {v['label']: k for k, v in CATEGORIES.items()}
+
+            # součty Likertu podle KEY
+            likert_sums = dict(
+                db.session.query(
+                    LikertAnswer.category,
+                    func.coalesce(func.sum(LikertAnswer.score), 0)
+                ).filter(LikertAnswer.user_id == int(uid)).group_by(LikertAnswer.category).all()
+            )
+            # výhry z duelů podle KEY
+            wins_map = dict(
+                db.session.query(
+                    DuelAnswer.chosen,
+                    func.count()
+                ).filter(DuelAnswer.user_id == int(uid)).group_by(DuelAnswer.chosen).all()
+            )
+
+            rows = []
+            for rp in stored:
+                key = label_to_key.get(rp.category)
+                rows.append({
+                    'rank': int(rp.rank or 0),
+                    'category_label': rp.category,
+                    'category_key': key or rp.category,
+                    'wins': int(wins_map.get(key, 0)) if key else 0,
+                    'likert': int(likert_sums.get(key, 0)) if key else 0,
+                })
+        else:
+            return redirect(url_for('priorities.entry'))
+
+    return render_template('results.html', rows=rows)
