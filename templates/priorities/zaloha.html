@@ -1,0 +1,1523 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa priorit — test (mobile‑first){% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Všechny styly z původního test.html - žádné změny */
+  .glass>header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    margin: 0 var(--content-px);
+    padding: 14px 12px;
+    background: rgba(255, 255, 255, 0.55) !important;
+    border: 1px solid rgba(15, 27, 36, 0.08) !important;
+    box-shadow: 0 6px 16px rgba(15, 27, 36, 0.06) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    /* ensure consistent spacing below header */
+  }
+
+  .glass>header,
+  .glass>main {
+    padding-left: var(--content-px);
+    padding-right: var(--content-px);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    letter-spacing: .2px;
+  }
+
+  .progressRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Right side container: meters aligned to the right edge */
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .paceCenter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+
+  .circleWrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+  }
+
+  .circleWrap svg {
+    transform: rotate(-90deg);
+    overflow: visible;
+    background: transparent;
+    display: block;
+  }
+
+  .circle-track {
+    stroke: rgba(15, 27, 36, .14);
+  }
+
+  .circle-bar {
+    stroke: var(--accent-a);
+    transition: stroke-dashoffset .3s ease;
+    filter: drop-shadow(0 0 6px rgba(126, 200, 255, .25));
+  }
+
+  .circleWrap .pct {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    color: #274156;
+  }
+
+  /* Big center pace circle (same logic as old template) */
+  .circleWrap--big {
+    position: relative;
+    width: 56px;
+    height: 56px;
+  }
+
+  /* Lock big circle size across all viewports */
+  .circleWrap--big svg {
+    width: 56px;
+    height: 56px;
+  }
+
+  .circleWrap--big .pct {
+    font-size: 12px;
+    color: #5a1a1a;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+  }
+
+  /* Orange variant for pace projection */
+  .circle-bar.danger {
+    stroke: #F3A36A;
+    filter: drop-shadow(0 0 6px rgba(243, 163, 106, .25));
+  }
+
+  .statementBox {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #fff;
+    color: #0f1a24;
+    box-shadow: 0 6px 16px rgba(15, 27, 36, .08);
+  }
+
+  .scale {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .choice {
+    border: 1px solid rgba(15, 27, 36, .12);
+    border-radius: 14px;
+    padding: 12px 10px;
+    text-align: center;
+    font-weight: 400;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    user-select: none;
+    background: #fff;
+    color: #0f1a24;
+    transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+    box-shadow: 0 1px 0 rgba(15, 27, 36, .04), 0 0 10px rgba(126, 200, 255, 0.6);
+  }
+
+  .choice:hover {
+    border-color: rgba(0, 140, 255, .35);
+    box-shadow: 0 6px 20px rgba(0, 140, 255, .08);
+    transform: translateY(-1px);
+  }
+
+  .choice input {
+    display: none;
+  }
+
+  .choice.selected {
+    border-color: rgba(0, 144, 255, .35);
+    background: #eaf5ff;
+    color: #0f3555;
+    box-shadow: 0 6px 16px rgba(0, 140, 255, .10), 0 0 14px rgba(0, 144, 255, 0.7);
+  }
+
+  .choice.disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .hint {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+
+  /* Duel */
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .optionCard {
+    border: 1px solid rgba(15, 27, 36, .10);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    background: #fff;
+    transition: box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+  }
+
+  .optionCard:hover {
+    border-color: rgba(0, 140, 255, .35);
+    box-shadow: 0 6px 20px rgba(0, 140, 255, .08);
+    transform: translateY(-1px);
+  }
+
+  .optionCard .name {
+    font-weight: 800;
+    color: #0f1a24;
+  }
+
+  /* Assistant (hints) */
+  .assistant.hidden {
+    display: none;
+  }
+
+  .assistant {
+    margin: 10px 0 16px;
+  }
+
+  .assistant-inner {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border: 1px solid rgba(15, 27, 36, .12);
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 16px rgba(15, 27, 36, .08);
+    padding: 14px;
+  }
+
+  .assistant-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  .assistant-avatar {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+    box-shadow: 0 4px 12px rgba(0, 140, 255, .18);
+    font-size: 18px;
+  }
+
+  .assistant-avatar.orb {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+    flex: 0 0 44px;
+    margin-right: 8px;
+  }
+
+  .assistant-avatar.orb .mini-orb {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: conic-gradient(from 0turn at 50% 50%, var(--brand-blue), var(--brand-purple), var(--brand-pink), var(--brand-blue)),
+      radial-gradient(60% 60% at 45% 40%, rgba(255, 255, 255, .28), rgba(255, 255, 255, 0) 60%);
+    box-shadow: 0 0 10px rgba(139, 92, 246, .35),
+      inset 0 0 0 1px rgba(255, 255, 255, .35);
+    animation: sweep 7.5s linear infinite, breatheOrb 2s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+  }
+
+  .assistant-avatar.orb .mini-orb::after {
+    content: "";
+    position: absolute;
+    inset: -18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .15) 0%, rgba(255, 255, 255, 0) 70%);
+    animation: breatheHalo 6s ease-in-out infinite;
+    opacity: .7;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .assistant-avatar.orb::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 22px solid #fff;
+    z-index: -10;
+    animation: breatheOrb 2s ease-in-out infinite;
+  }
+
+  /* LP orb layered effects and animations */
+  @keyframes ringPulse {
+
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: .6;
+    }
+
+    50% {
+      transform: scale(1.05);
+      opacity: .9;
+    }
+  }
+
+  @keyframes spinHighlight {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes orbGlow {
+    0% {
+      filter: saturate(120%) brightness(1);
+    }
+
+    50% {
+      filter: saturate(160%) brightness(1.08);
+    }
+
+    100% {
+      filter: saturate(120%) brightness(1);
+    }
+  }
+
+  @keyframes breatheHalo {
+    0% {
+      opacity: .06;
+      transform: scale(.96);
+    }
+
+    50% {
+      opacity: .18;
+      transform: scale(1.08);
+    }
+
+    100% {
+      opacity: .06;
+      transform: scale(.96);
+    }
+  }
+
+  @keyframes breatheHaloStrong {
+    0% {
+      opacity: .10;
+      transform: scale(.96);
+    }
+
+    50% {
+      opacity: .28;
+      transform: scale(1.10);
+    }
+
+    100% {
+      opacity: .10;
+      transform: scale(.96);
+    }
+  }
+
+  @keyframes breatheOrb {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.08);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .bubble {
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 12px rgba(15, 27, 36, .08);
+    max-width: 80%;
+  }
+
+  .bubble.is-active {
+    border: 1.5px solid rgba(0, 144, 255, .35);
+  }
+
+  .assistant-content {
+    flex: 1;
+  }
+
+  #assistantTitle {
+    font-family: 'Poppins', sans-serif;
+    margin: 2px 0 6px;
+    font-size: 18px;
+    text-align: left;
+  }
+
+  .assistant-body {
+    color: #274156;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .assistant-actions {
+    display: flex;
+    justify-content: center;
+    padding-top: 6px;
+  }
+
+  .assistant.minimal .assistant-inner {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 6px 0 10px;
+  }
+
+  .assistant.minimal #assistantTitle {
+    font-size: 20px;
+    margin: 0 auto 6px;
+    max-width: 720px;
+    text-align: left;
+  }
+
+  .assistant.minimal .assistant-body {
+    font-size: 16px;
+    line-height: 1.65;
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: left;
+  }
+
+  .assistant.minimal .assistant-row {
+    margin-bottom: 18px;
+  }
+
+  .assistant-row,
+  .typing {
+    scroll-margin-bottom: 140px;
+  }
+
+  .assistant.minimal .assistant-text p,
+  .assistant.minimal .assistant-text ul,
+  .assistant.minimal .assistant-text img {
+    margin-bottom: 10px;
+  }
+
+  /* Pills and modal buttons (missing in this file) */
+  .pill {
+    border: 1px solid rgba(0, 120, 255, .18);
+    background: rgba(0, 120, 255, .08);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #0f3555;
+  }
+
+  /* --- Jednotné styly tlačítek pro modální dialogy i mimo ně --- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    transition: all .2s ease;
+  }
+
+  .btn.primary {
+    background: linear-gradient(90deg, var(--brand-blue), var(--brand-purple));
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+  }
+
+  .btn.primary:hover {
+    background: linear-gradient(90deg, var(--brand-purple), var(--brand-pink));
+  }
+
+  .btn.secondary {
+    background: #fff;
+    border: 1px solid var(--brand-blue);
+    color: var(--brand-blue);
+  }
+
+  .btn.secondary:hover {
+    background: rgba(0, 120, 255, 0.08);
+  }
+
+  .btn.secondary.selected {
+    background: var(--brand-blue);
+    color: #fff;
+    border-color: var(--brand-blue);
+  }
+
+  /* .hbtn styles removed in favor of unified .btn styles */
+
+  /* Review modal cards — mobile-first, full-width, aligned with modal paddings */
+  #reviewList {
+    box-sizing: border-box;
+  }
+
+  #reviewList .review-card {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid rgba(15, 27, 36, .14);
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    margin: 0 0 12px;
+    box-shadow: 0 2px 10px rgba(15, 27, 36, .05);
+    transition: border-color .15s ease, box-shadow .2s ease, transform .08s ease;
+  }
+
+  #reviewList .review-card::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--brand-blue), var(--brand-purple), var(--brand-pink));
+    opacity: .9;
+  }
+
+  #reviewList .review-card:hover {
+    border-color: rgba(0, 140, 255, .35);
+    box-shadow: 0 10px 24px rgba(0, 140, 255, .10);
+    transform: translateY(-1px);
+  }
+
+  #reviewList .review-card:focus-within {
+    border-color: rgba(0, 144, 255, .42);
+    box-shadow: 0 0 0 2px rgba(0, 144, 255, .20), 0 10px 24px rgba(0, 140, 255, .12);
+  }
+
+  #reviewList .review-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f1a24;
+    margin: 0 0 10px;
+    line-height: 1.4;
+  }
+
+  #reviewList .mini-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+
+  @media (min-width:700px) {
+    #reviewList .review-card {
+      padding: 16px 16px 14px;
+    }
+
+    #reviewList .mini-choices {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    #reviewList .review-text {
+      font-size: 16px;
+    }
+  }
+
+  .typing {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid rgba(15, 27, 36, .10);
+    box-shadow: 0 6px 16px rgba(15, 27, 36, .06);
+    margin: 10px auto 0;
+    max-width: 120px;
+    justify-content: center;
+  }
+
+  .typing .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+    animation: blink 1.2s infinite ease-in-out;
+  }
+
+  @keyframes blink {
+
+    0%,
+    80%,
+    100% {
+      opacity: .25;
+      transform: translateY(0);
+    }
+
+    40% {
+      opacity: 1;
+      transform: translateY(-2px);
+    }
+  }
+
+  /* Tooltips */
+  .tip {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: #001224;
+    background: #ffffff;
+    border: 1px solid rgba(15, 27, 36, .16);
+    border-radius: 8px;
+    box-shadow: 0 8px 18px rgba(15, 27, 36, .18);
+    transform: translate(-50%, calc(-100% - 10px));
+    opacity: 0;
+    transition: opacity .12s ease;
+    max-width: 260px;
+    white-space: normal;
+  }
+
+  .tip.visible {
+    opacity: 1;
+  }
+
+  /* --- Responsive modal (mobile-first) --- */
+  #reviewModal>[role="dialog"] {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 700px) {
+    #reviewModal>[role="dialog"] {
+      left: 0 !important;
+      right: 0 !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      transform: none !important;
+      width: 100% !important;
+      max-height: 100dvh !important;
+      height: 100dvh !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      overscroll-behavior: contain;
+    }
+
+    #reviewHeader {
+      top: 0 !important;
+      padding: calc(12px + env(safe-area-inset-top)) 12px 12px !important;
+      gap: 8px !important;
+      flex-wrap: wrap;
+      justify-content: space-between !important;
+      /* split: title left, controls right */
+    }
+
+    #reviewHeader>div:last-child {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1 0 100%;
+      /* take a full new row */
+      margin-left: 0 !important;
+      /* no auto-margin tricks on wrapped line */
+      justify-content: flex-end !important;
+      /* pack contents to the right */
+    }
+
+    #reviewList {
+      padding: 14px 12px calc(14px + env(safe-area-inset-bottom)) !important;
+    }
+
+    #reviewActions {
+      padding: 12px 12px calc(12px + env(safe-area-inset-bottom)) !important;
+      gap: 10px !important;
+      justify-content: stretch !important;
+    }
+
+    #reviewActions .btn {
+      flex: 1 1 0;
+    }
+  }
+
+  /* Modal polish */
+  .modal-header {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 6px 16px rgba(15, 27, 36, .08);
+  }
+
+  .modal-actions {
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Scroll shadows to signal content */
+  .modal-header.is-scrolled {
+    box-shadow: 0 10px 22px rgba(15, 27, 36, .12);
+  }
+
+  .modal-actions.is-stuck {
+    box-shadow: 0 -10px 22px rgba(15, 27, 36, .10);
+  }
+
+  /* Segmented control for filters */
+  .segmented {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+
+  /* Compact icon button (header close) */
+  .icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(15, 27, 36, .12);
+    background: #fff;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .icon-btn:hover {
+    box-shadow: 0 6px 16px rgba(0, 140, 255, .12);
+    border-color: rgba(0, 140, 255, .25);
+  }
+
+  .icon-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 144, 255, .35);
+  }
+
+  /* Larger screens */
+  @media (min-width: 700px) {
+    .scale {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .pair {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .paceCenter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .glass>header {
+      gap: 10px;
+    }
+
+    .progressRow {
+      gap: 10px;
+    }
+
+    .header-right {
+      gap: 10px;
+    }
+
+    /* Desktop: big pace circle back to 72px */
+    .circleWrap--big {
+      width: 72px;
+      height: 72px;
+    }
+
+    .circleWrap--big svg {
+      width: 72px;
+      height: 72px;
+    }
+  }
+
+  /* Desktop-only site-header styles to match login.html */
+  @media (min-width: 900px) {
+    .glass>header {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .glass>header .paceCenter {
+      margin: 0 auto;
+    }
+
+    /* Absolutely center #paceCenter within its container on desktop only */
+    .glass>header #paceCenter {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  /* Avatar spacing: keep extra space on mobile, remove it on desktop */
+  @media (max-width: 899px) {
+    .assistant-avatar.orb {
+      margin-right: 8px;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .assistant-avatar.orb {
+      margin-right: 28px;
+    }
+
+    .assistant-avatar.orb {
+      margin-top: 7px;
+    }
+  }
+
+  @media (max-width: 899px) {
+    .glass>header {
+      position: static;
+      top: auto;
+      left: auto;
+      right: auto;
+      z-index: auto;
+      margin-bottom: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .glass>main {
+      margin-top: 0;
+      padding-top: 12px;
+    }
+  }
+
+  /* Modal overlay přes site header */
+  #reviewModal[aria-hidden="false"]~* .site-header,
+  body:has(#reviewModal[aria-hidden="false"]) .site-header {
+    z-index: 1 !important;
+  }
+
+  /* Zajistit že modal je nad vším */
+  #reviewModal {
+    z-index: 10000 !important;
+  }
+
+    {
+    % if stage=='hint' %
+  }
+
+  .wrap {
+    align-items: flex-start;
+  }
+
+    {
+    % endif %
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="glass">
+  {% if stage != 'hint' %}
+  <header>
+    {% if stage == "likert" and progress.index >= 6 %}
+    <button class="btn secondary" type="button" id="openQuestionsBtn">Otázky</button>
+    {% endif %}
+    <div class="header-right">
+      <div class="progressRow"
+        style="display:{% if stage == 'likert' %}none{% elif stage == 'hint' and (hint_type == 'welcome' or hint_type == 'after5') %}none{% else %}flex{% endif %}">
+        <div class="circleWrap" tabindex="0" data-tip="Postup v otázkách: kolik % máš hotovo.">
+          <svg width="56" height="56" viewBox="0 0 56 56" aria-label="Progres">
+            <circle class="circle-track" cx="28" cy="28" r="22" fill="none" stroke-width="6" />
+            <circle class="circle-bar" id="circleBar" cx="28" cy="28" r="22" fill="none" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="138.23" />
+          </svg>
+          <div class="pct" id="circleText">0%</div>
+        </div>
+        <div class="circleWrap" aria-label="Zbývající body" tabindex="0" data-tip="Zbývající rozpočet bodů pro volby.">
+          <svg width="56" height="56" viewBox="0 0 56 56">
+            <circle class="circle-track" cx="28" cy="28" r="22" fill="none" stroke-width="6" />
+            <circle class="circle-bar" id="budgetCircleBar" cx="28" cy="28" r="22" fill="none" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="138.23" />
+          </svg>
+          <div class="pct" id="budgetCircleText">…</div>
+        </div>
+      </div>
+      <div class="paceCenter" id="paceCenter" aria-label="Tempo (projekce)" style="display:none">
+        <div class="circleWrap circleWrap--big" id="paceWrap" tabindex="0"
+          data-tip="Projekce rozpočtu: odhad kolik % rozpočtu utratíš, když pojedeš stejným tempem.">
+          <svg width="72" height="72" viewBox="0 0 56 56">
+            <circle class="circle-track" cx="28" cy="28" r="22" fill="none" stroke-width="6" />
+            <circle class="circle-bar danger" id="paceCircleBar" cx="28" cy="28" r="22" fill="none" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="138.23" />
+          </svg>
+          <div class="pct" id="paceCircleText">—</div>
+        </div>
+      </div>
+    </div>
+  </header>
+  {% endif %}
+
+  <main id="app" aria-live="polite">
+    <!-- Assistant panel -->
+    <section id="assistantPanel"
+      class="assistant{% if stage == 'hint' %} minimal{% endif %} {% if stage != 'hint' %}hidden{% endif %}"
+      aria-live="polite">
+      <div class="assistant-inner">
+        <div class="assistant-content">
+          <div class="assistant-bubble">
+            <div class="assistant-text">
+              <h2 id="assistantTitle"></h2>
+              <div id="assistantBody" class="assistant-body"></div>
+              <div class="assistant-actions">
+                {% if stage == 'hint' %}
+                <form method="POST" action="{{ url_for('priorities.hint_continue') }}">
+                  <input type="hidden" name="hint_type" value="{{ hint_type or '' }}" />
+                  <button id="assistantBtn" class="btn primary" type="submit">Pokračovat</button>
+                </form>
+                {% else %}
+                <button id="assistantBtn" class="btn primary" type="button">Pokračovat</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {% if stage == "auth" %}
+    <div style="padding:24px">
+      <h1>Nejste přihlášen</h1>
+      <p class="kicker">Přejděte na <a href="/auth">/auth</a> a přihlaste se.</p>
+    </div>
+    {% elif stage == "likert" %}
+    <div class="statementBox">{{ data.text }}{% if data.text is string and ('je aktuálně' not in data.text) %} — je
+      aktuálně:{% endif %}</div>
+    <form id="likertForm" method="POST" action="{{ url_for('priorities.answer_likert') }}">
+      <input type="hidden" name="category_key" value="{{ data.category_key }}">
+      <input type="hidden" name="statement_index" value="{{ data.statement_index }}">
+      <div class="scale">
+        {% set likert_labels = ['vůbec nedůležité','spíše nedůležité','důležité','velmi důležité'] %}
+        {% for i in range(data.likert_min, data.likert_max + 1) %}
+        <label class="choice"><input type="radio" name="score" value="{{ i }}" required> {{ likert_labels[i-1]
+          }}</label>
+        {% endfor %}
+      </div>
+      <div class="controls">
+        <span class="hint">Vyber 1 možnost</span>
+        <span class="hint" id="paceHint" style="white-space:nowrap"></span>
+        <button class="btn secondary" type="button" id="openReview" style="display:none">Upravit odpovědi</button>
+        <button class="btn primary" type="submit">Pokračovat →</button>
+      </div>
+    </form>
+    <div id="budgetBanner" class="kicker" style="display:none; margin-top:8px; color:#8a3b00">Nemáš dost bodů pro vyšší
+      volbu. Sniž něco v dřívějších odpovědích — otevři „Upravit odpovědi".</div>
+    {% elif stage == "duel" %}
+    <div class="kicker">Porovnání {{ progress.index }} / {{ progress.total }}</div>
+    <form method="POST" action="{{ url_for('priorities.answer_duel') }}">
+      <input type="hidden" name="a_key" value="{{ data.a.key }}">
+      <input type="hidden" name="b_key" value="{{ data.b.key }}">
+      <div class="pair">
+        <button class="optionCard" type="submit" name="chosen_key" value="{{ data.a.key }}">
+          <div class="name">🅰️ {{ data.a.label }}</div>
+        </button>
+        <button class="optionCard" type="submit" name="chosen_key" value="{{ data.b.key }}">
+          <div class="name">🅱️ {{ data.b.label }}</div>
+        </button>
+      </div>
+    </form>
+    {% elif stage == "result" %}
+    <script>
+      (function () {
+        var url = {{ url_for('priorities.standalone_results') | tojson
+      }};
+      // Prevent redirect loop if we're already there
+      if (location.pathname !== new URL(url, location.origin).pathname) {
+        location.replace(url);
+      }
+          }) ();
+    </script>
+    <noscript>
+      <p>Výsledky jsou připravené. Pokračuj na <a href="{{ url_for('priorities.standalone_results') }}">stránku
+          výsledků</a>.</p>
+    </noscript>
+    {% endif %}
+  </main>
+
+</div>
+
+<!-- Modal: Upravit odpovědi -->
+<div id="reviewModal" aria-hidden="true" style="display:none; position:fixed; inset:0; z-index:9999;">
+  <div id="reviewBackdrop"
+    style="position:absolute; inset:0; background:rgba(15,27,36,.42); backdrop-filter: blur(4px);"></div>
+  <div id="reviewDialog" role="dialog" aria-modal="true" aria-labelledby="reviewTitle" tabindex="-1"
+    style="position:absolute; left:50%; top:52%; transform:translate(-50%,-50%); width:min(880px, 92vw); max-height:86vh; overflow:auto; background:#fff; border:1px solid rgba(15,27,36,.12); border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,.22);">
+    <div id="reviewHeader" class="modal-header"
+      style="position:sticky; top:-8px; z-index:2; padding:14px 16px; border-bottom:1px solid rgba(15,27,36,.08); display:flex; gap:10px; align-items:center; justify-content:space-between">
+      <div style="display:flex; align-items:center; gap:10px">
+        <h3 id="reviewTitle" style="margin:0; font-family:'Poppins',sans-serif; font-weight:600;">Upravit odpovědi</h3>
+      </div>
+      <div style="display:flex; gap:10px; margin-left:auto; align-items:center;">
+        <div class="segmented">
+          <button class="btn secondary" data-filter="all" id="fltAll">Vše</button>
+          <button class="btn secondary active" data-filter="costly" id="fltCostly">4 &amp; 3</button>
+          <button class="btn secondary" data-filter="recent" id="fltRecent">Nejnovější</button>
+        </div>
+        <button class="icon-btn" id="closeReviewX" aria-label="Zavřít modal" title="Zavřít">×</button>
+      </div>
+    </div>
+    <div id="reviewList" style="padding:20px 16px 12px"></div>
+    <div id="reviewActions" class="modal-actions"
+      style="position:sticky; bottom:0; padding:12px 16px; border-top:1px solid rgba(15,27,36,.08); display:flex; justify-content:flex-end; gap:8px">
+      <button class="btn secondary" id="closeReview">Zavřít</button>
+      <button class="btn primary" id="continueReview">Pokračovat</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Single tooltip instance
+  const __tipEl = document.createElement('div'); __tipEl.className = 'tip'; document.body.appendChild(__tipEl);
+  function bindTooltips(root = document) {
+    const nodes = root.querySelectorAll?.('[data-tip]') || [];
+    nodes.forEach(el => {
+      const show = (e) => { __tipEl.textContent = el.getAttribute('data-tip') || ''; if (!__tipEl.textContent) return; __tipEl.classList.add('visible'); positionTip(e); };
+      const hide = () => { __tipEl.classList.remove('visible'); };
+      const move = (e) => positionTip(e);
+      el.addEventListener('mouseenter', show);
+      el.addEventListener('mouseleave', hide);
+      el.addEventListener('mousemove', move);
+      el.addEventListener('focus', (e) => { __tipEl.textContent = el.getAttribute('data-tip') || ''; if (!__tipEl.textContent) return; __tipEl.classList.add('visible'); const rect = el.getBoundingClientRect(); positionTip({ clientX: rect.left + rect.width / 2, clientY: rect.top }); });
+      el.addEventListener('blur', () => __tipEl.classList.remove('visible'));
+    });
+  }
+  function positionTip(e) {
+    const padding = 10; const rect = __tipEl.getBoundingClientRect();
+    let x = (typeof e.clientX === 'number') ? e.clientX : window.innerWidth / 2;
+    let y = (typeof e.clientY === 'number') ? e.clientY : 0;
+    x = Math.max(padding + rect.width / 2, Math.min(window.innerWidth - padding - rect.width / 2, x));
+    const minY = padding + rect.height + 6;
+    y = Math.max(minY, y);
+    __tipEl.style.left = x + 'px'; __tipEl.style.top = (y - 8) + 'px';
+  }
+
+  // Progress meters
+  const bar = document.getElementById('bar'); // optional if used somewhere else
+  const circleBar = document.getElementById('circleBar');
+  const circleText = document.getElementById('circleText');
+  const CIRC = 2 * Math.PI * 22;
+  function setProgress(pct) {
+    const p = Math.max(0, Math.min(100, Math.round(pct)));
+    if (bar) bar.style.width = p + '%';
+    if (circleBar) circleBar.style.strokeDashoffset = CIRC * (1 - p / 100);
+    if (circleText) circleText.textContent = p + '%';
+  }
+
+  {% if stage == 'likert' %}
+  setProgress(Math.round(100 * ({{ progress.index }} - 1) / {{ progress.total }}));
+  document.querySelectorAll('.choice').forEach(label => {
+    const input = label.querySelector('input[type="radio"]');
+    label.addEventListener('click', () => {
+      if (!input) return;
+      // Clear all selections and checked states from the same group
+      document.querySelectorAll(`input[name="${input.name}"]`).forEach(r => {
+        r.checked = false;
+        r.closest('label.choice').classList.remove('selected');
+      });
+      // Apply only to clicked one
+      input.checked = true;
+      label.classList.add('selected');
+    });
+  });
+
+  const REVIEW_URL = {{ url_for('priorities.review_answers') | tojson }};
+  const ADJUST_URL = {{ url_for('priorities.adjust_answer') | tojson }};
+  const POOL = 200;
+  const LIKERT_MIN = {{ data.likert_min|default (1) }};
+  const LIKERT_MAX = {{ data.likert_max|default (4) }};
+  const idxQ = {{ progress.index }};
+  const totalQ = {{ progress.total }};
+
+  const budgetBanner = document.getElementById('budgetBanner');
+  const openReviewBtn = document.getElementById('openReview');
+  const budgetCircleBar = document.getElementById('budgetCircleBar');
+  const budgetCircleText = document.getElementById('budgetCircleText');
+  const paceCircleBar = document.getElementById('paceCircleBar');
+  const paceCircleText = document.getElementById('paceCircleText');
+  const paceHint = document.getElementById('paceHint');
+  let REMAINING = null;
+  const LIKERT_LABELS = ['vůbec nedůležité', 'spíše nedůležité', 'důležité', 'velmi důležité'];
+
+
+  function updateRemaining(rem) {
+    REMAINING = rem;
+    // Modal-only: savings counter = how many points freed since modal opened
+    try {
+      if (MODAL_OPEN && typeof rem === 'number' && Number.isFinite(rem)) {
+        if (MODAL_INITIAL_REMAINING == null) MODAL_INITIAL_REMAINING = rem;
+        const saved = Math.max(0, Math.round(rem - MODAL_INITIAL_REMAINING));
+        const pill = document.getElementById('savingsPill');
+        if (pill) { pill.textContent = `Ušetřeno: ${saved}`; pill.style.display = 'inline-block'; }
+      }
+    } catch (_) { }
+    if (typeof rem === 'number' && budgetCircleBar && budgetCircleText) {
+      const p = Math.max(0, Math.min(100, Math.round((rem / POOL) * 100)));
+      budgetCircleBar.style.strokeDashoffset = CIRC * (1 - p / 100);
+      budgetCircleText.textContent = String(rem);
+    } else if (budgetCircleText) {
+      budgetCircleText.textContent = '…';
+    }
+    const out = (rem != null && rem <= 0);
+    if (budgetBanner) budgetBanner.style.display = out ? 'block' : 'none';
+    if (openReviewBtn) openReviewBtn.style.display = out ? 'inline-block' : 'none';
+    lockChoicesByRemaining(rem);
+    updatePace(rem);
+  }
+  function lockChoicesByRemaining(rem) {
+    if (rem == null) return;
+    document.querySelectorAll('.choice').forEach(label => {
+      const input = label.querySelector('input[type="radio"]');
+      const v = Number(input?.value || 0);
+      const dis = v > rem; input.disabled = dis; label.classList.toggle('disabled', dis);
+    });
+  }
+  function updatePace(remaining) {
+    if (typeof remaining !== 'number' || !Number.isFinite(remaining)) {
+      if (paceCircleBar) paceCircleBar.style.strokeDashoffset = CIRC;
+      if (paceCircleText) paceCircleText.textContent = '—';
+      if (paceHint) paceHint.textContent = '';
+      return;
+    }
+    const answered = Math.max(0, (idxQ - 1));
+    const spent = POOL - remaining;
+    const leftQ = Math.max(0, totalQ - answered);
+    const avgSoFar = answered > 0 ? (spent / answered) : 0;
+    const projectedTotal = avgSoFar * totalQ;
+    const projectedPctRaw = (projectedTotal / POOL) * 100;
+    const projectedPctForCircle = Math.max(0, Math.min(100, Math.round(projectedPctRaw)));
+    const off = CIRC * (1 - projectedPctForCircle / 100);
+    if (paceCircleBar) paceCircleBar.style.strokeDashoffset = off;
+    const displayPct = Math.max(0, Math.min(999, Math.round(projectedPctRaw)));
+    if (paceCircleText) paceCircleText.textContent = displayPct + '%';
+    try {
+      const paceWrapEl = document.getElementById('paceWrap');
+      if (paceWrapEl) {
+        const tip = (answered === 0)
+          ? 'Projekce rozpočtu: čekám na první odpovědi.'
+          : `Projekce: ${displayPct}% rozpočtu po dokončení. ${projectedTotal <= POOL ? 'Jsi v limitu.' : 'Překročil/a bys limit, zvaž nižší volby u dalších položek.'}`;
+        paceWrapEl.setAttribute('data-tip', tip);
+      }
+    } catch (_) { }
+    const neededAvgNext = leftQ > 0 ? (remaining / leftQ) : 0;
+    let msg = '';
+    if (answered === 0) msg = 'Začni klidně vyššími volbami — teprve odhaduji tempo';
+    else if (projectedTotal <= POOL) msg = ``;
+    else {
+      const over = Math.max(0, Math.round(projectedTotal - POOL));
+      if (leftQ === 0) msg = `Hotovo • překročeno o ~${over}`;
+      else if (neededAvgNext > LIKERT_MAX) msg = `Nad rozpočet o ~${over} • i samé „${LIKERT_LABELS[0]}" nestačí — zvaž snížení pár odpovědí`;
+      else { const hintAvg = Math.max(LIKERT_MIN, Math.min(LIKERT_MAX, neededAvgNext)); msg = ``; }
+    }
+    if (paceHint) paceHint.textContent = msg;
+  }
+
+  async function fetchRemaining() {
+    try {
+      const r = await fetch(REVIEW_URL);
+      if (!r.ok) throw new Error('status ' + r.status);
+      const j = await r.json(); const rem = Number(j.remaining);
+      if (!Number.isFinite(rem)) throw new Error('bad payload');
+      updateRemaining(rem);
+      return { data: j };
+    } catch (e) { updateRemaining(null); return { data: { items: [] } }; }
+  }
+
+  // Modal logic
+  const modal = document.getElementById('reviewModal');
+  const backdrop = document.getElementById('reviewBackdrop');
+  const reviewList = document.getElementById('reviewList');
+  const fltAll = document.getElementById('fltAll');
+  const fltCostly = document.getElementById('fltCostly');
+  const fltRecent = document.getElementById('fltRecent');
+  let modalOpenerBtn = null;
+  const reviewDialogEl = document.getElementById('reviewDialog');
+  const reviewHeaderEl = document.getElementById('reviewHeader');
+  const reviewActionsEl = document.getElementById('reviewActions');
+  function openModal() {
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    const dlg = document.getElementById('reviewDialog');
+    try { dlg && dlg.focus({ preventScroll: true }); } catch (_) { }
+  }
+  function closeModal() {
+    // Move focus out of the hidden tree BEFORE applying aria-hidden
+    const opener = modalOpenerBtn || document.getElementById('openReview') || document.getElementById('openQuestionsBtn') || document.body;
+    if (modal.contains(document.activeElement)) {
+      try { opener.focus(); } catch (_) { }
+    }
+    requestAnimationFrame(() => {
+      modal.setAttribute('aria-hidden', 'true');
+      modal.style.display = 'none';
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+      modalOpenerBtn = null;
+    });
+  }
+
+  // Handle clicks inside the modal (adjust answers)
+  reviewList?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn.secondary');
+    if (!btn || btn.classList.contains('active') || btn.classList.contains('disabled')) return;
+    const qid = btn.dataset.qid; const val = Number(btn.dataset.val);
+    try {
+      const r = await fetch(ADJUST_URL, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q_id: qid, new_value: val })
+      });
+      const j = await r.json();
+      if (!r.ok) { if (typeof j.remaining === 'number') updateRemaining(j.remaining); return; }
+      updateRemaining(Number(j.remaining));
+      const group = btn.parentElement;
+      group.querySelectorAll('.btn.secondary').forEach(b => {
+        b.classList.remove('active', 'selected');
+      });
+      btn.classList.add('active', 'selected');
+      syncDisableInModal();
+    } catch (err) { console.error(err); }
+  });
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function renderReviewItems(items, filter) {
+    if (filter === 'recent') items = [...items].sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+    reviewList.innerHTML = (items || []).map(it => {
+      const btns = Array.from({ length: LIKERT_MAX - LIKERT_MIN + 1 }, (_, i) => i + LIKERT_MIN).map(v => {
+        const label = LIKERT_LABELS[(v - 1)] || String(v);
+        const active = v === Number(it.value) ? 'active selected' : '';
+        return `<button class="btn secondary ${active}" data-qid="${it.q_id}" data-val="${v}">${label}</button>`;
+      }).join('');
+      return `
+            <div class="review-card">
+              <div class="review-text">${esc(it.text || '')}</div>
+              <div class="mini-choices" data-qid="${it.q_id}">${btns}</div>
+            </div>`;
+    }).join('') || '<div class="kicker">Zatím tu nic není.</div>';
+    syncDisableInModal();
+  }
+  function syncDisableInModal() {
+    const rem = (typeof REMAINING === 'number') ? REMAINING : null; if (!Number.isFinite(rem)) return;
+    reviewList.querySelectorAll('.mini-choices').forEach(wrap => {
+      const active = wrap.querySelector('.btn.secondary.active'); const currVal = Number(active?.dataset.val || 0);
+      wrap.querySelectorAll('.btn.secondary').forEach(btn => { const v = Number(btn.dataset.val); const delta = v - currVal; const dis = delta > rem; btn.classList.toggle('disabled', dis); btn.disabled = dis; });
+    });
+  }
+  async function loadReview(filter = 'costly') {
+    const qs = (filter === 'costly') ? '?costly=1' : '';
+    const r = await fetch(REVIEW_URL + qs);
+    const j = await r.json().catch(() => ({ items: [], remaining: null }));
+    updateRemaining(Number(j.remaining));
+    renderReviewItems(j.items || [], filter);
+  }
+
+  // Openers
+  const openReview = document.getElementById('openReview');
+  openReview?.addEventListener('click', () => {
+    modalOpenerBtn = openReview;
+    openModal();
+    loadReview('costly').catch(() => { });
+  });
+  document.getElementById('continueReview')?.addEventListener('click', closeModal);
+  document.getElementById('closeReview')?.addEventListener('click', closeModal);
+  backdrop?.addEventListener('click', closeModal);
+  document.getElementById('closeReviewX')?.addEventListener('click', closeModal);
+  // Scroll shadows inside modal dialog
+  reviewDialogEl?.addEventListener('scroll', () => {
+    const y = reviewDialogEl.scrollTop;
+    const maxY = reviewDialogEl.scrollHeight - reviewDialogEl.clientHeight - 1;
+    reviewHeaderEl?.classList.toggle('is-scrolled', y > 2);
+    reviewActionsEl?.classList.toggle('is-stuck', y < maxY);
+  });
+  function setFilter(which) { [fltAll, fltCostly, fltRecent].forEach(b => b?.classList.toggle('active', b?.dataset.filter === which)); loadReview(which); }
+  fltAll?.addEventListener('click', () => setFilter('all'));
+  fltCostly?.addEventListener('click', () => setFilter('costly'));
+  fltRecent?.addEventListener('click', () => setFilter('recent'));
+
+  // Header button: open modal with recent answers
+  const openQuestionsBtn = document.getElementById('openQuestionsBtn');
+  openQuestionsBtn?.addEventListener('click', () => {
+    modalOpenerBtn = openQuestionsBtn;
+    openModal();
+    loadReview('recent').catch(() => loadReview('costly'));
+  });
+
+  // Form submit guard
+  const likertForm = document.getElementById('likertForm');
+  likertForm?.addEventListener('submit', (e) => {
+    const chosen = likertForm.querySelector('input[name="score"]:checked');
+    const rem = (typeof REMAINING === 'number') ? REMAINING : null;
+    if (!chosen || (typeof rem === 'number' && rem <= 0)) {
+      e.preventDefault();
+      modalOpenerBtn = likertForm.querySelector('button.btn.primary[type="submit"]') || document.activeElement || document.body;
+      openModal();
+      loadReview('costly').catch(() => { });
+    }
+  });
+
+  bindTooltips(document);
+  fetchRemaining();
+  // Show header meters after thresholds (same behavior as old template)
+  (function () {
+    const answeredSoFar = Math.max(0, ({{ progress.index }} - 1));
+  // progress mini‑circles after 5 answered
+  const progressRow = document.querySelector('header .progressRow');
+  if (progressRow) progressRow.style.display = (answeredSoFar >= 5) ? 'flex' : 'none';
+  // pace circle after 20 answered
+  const paceCenter = document.getElementById('paceCenter');
+  if (paceCenter) paceCenter.style.display = (answeredSoFar >= 20) ? 'flex' : 'none';
+      }) ();
+  {% elif stage == 'hint' %}
+  // Progressive hint renderer
+  (function () {
+    const panel = document.getElementById('assistantPanel');
+    const titleEl = document.getElementById('assistantTitle');
+    const bodyEl = document.getElementById('assistantBody');
+    const btnEl = document.getElementById('assistantBtn');
+    const btnForm = btnEl?.closest('form');
+    if (!panel || !titleEl || !bodyEl || !btnEl) return;
+    const key = {{ (hint_type or 'welcome') | tojson
+  }};
+  const defaultSentenceDelay = 120; const charDelay = 24;
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  let __scrollAnim = null;
+  function smoothScrollTo(targetY, duration = 420) { if (__scrollAnim) cancelAnimationFrame(__scrollAnim); const startY = window.scrollY || window.pageYOffset; const dist = targetY - startY; const start = performance.now(); function step(now) { const t = Math.min(1, (now - start) / duration); const y = startY + dist * easeOutCubic(t); window.scrollTo(0, y); if (t < 1) { __scrollAnim = requestAnimationFrame(step); } else { __scrollAnim = null; } } __scrollAnim = requestAnimationFrame(step); }
+  function computeChatTargetY() {
+    const last = bodyEl.querySelector('.assistant-row:last-of-type') || bodyEl.querySelector('.typing:last-of-type');
+    if (!last) return null;
+    const rect = last.getBoundingClientRect();
+    const siteH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--site-h')) || 56;
+    const pad = Math.max(120, siteH + 40);
+    const y = rect.bottom + window.scrollY - window.innerHeight + pad;
+    return Math.max(0, y);
+  }
+  let scheduleScroll = (function () {
+    let last = 0, timer = null;
+    function run() {
+      last = Date.now(); timer = null;
+      const lastEl = bodyEl.querySelector('.assistant-row:last-of-type') || bodyEl.querySelector('.typing:last-of-type');
+      if (lastEl) {
+        try { lastEl.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch (_) { }
+      } else {
+        const sc = document.scrollingElement || document.documentElement;
+        try { sc.scrollTo({ top: sc.scrollHeight, behavior: 'smooth' }); } catch (_) { window.scrollTo(0, sc.scrollHeight); }
+      }
+    }
+    return function () {
+      const now = Date.now();
+      const wait = 140;
+      const remaining = wait - (now - last);
+      if (remaining <= 0) { clearTimeout(timer); run(); }
+      else if (!timer) { timer = setTimeout(run, remaining); }
+    };
+  })();
+  function showTyping() { const wrap = document.createElement('div'); wrap.className = 'typing'; wrap.style.opacity = '0'; wrap.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>'; bodyEl.appendChild(wrap); requestAnimationFrame(() => { wrap.style.transition = 'opacity .25s ease'; wrap.style.opacity = '1'; scheduleScroll(); }); return wrap; }
+  function removeTyping(node) { if (!node || !node.parentNode) return; node.style.transition = 'opacity .2s ease'; node.style.opacity = '0'; setTimeout(() => { if (node.parentNode) node.parentNode.removeChild(node); }, 200); }
+  function splitIntoSentences(text) { if (!text) return []; const cleaned = String(text).replace(/\s*\n+\s*/g, ' ').trim(); return cleaned.split(/(?<=[.!?])\s+/u).filter(Boolean); }
+  async function typeBySentences(text, container, sentenceDelay = defaultSentenceDelay) { const sentences = splitIntoSentences(text); for (let i = 0; i < sentences.length; i++) { const span = document.createElement('span'); span.textContent = (i > 0 ? ' ' : '') + sentences[i]; span.style.opacity = '0'; span.style.display = 'inline'; container.appendChild(span); void span.offsetWidth; await new Promise(requestAnimationFrame); span.style.transition = 'opacity .35s ease'; span.style.opacity = '1'; await sleep(Math.max(60, sentenceDelay)); scheduleScroll(); } }
+  function typeByChars(text, container) { return new Promise(resolve => { let i = 0; const tick = () => { if (i >= text.length) { resolve(); return; } const chunk = text.slice(i, i + 3); i += chunk.length; container.textContent += chunk; if (i % 9 === 0) scheduleScroll(); setTimeout(tick, 24); }; tick(); }); }
+  function setActiveRow(rowEl) { try { document.querySelectorAll('#assistantBody .assistant-row.active').forEach(r => r.classList.remove('active')); document.querySelectorAll('#assistantBody .bubble.is-active').forEach(b => b.classList.remove('is-active')); if (!rowEl) return; rowEl.classList.add('active'); const b = rowEl.querySelector('.bubble'); if (b) b.classList.add('is-active'); scheduleScroll(); } catch (e) { } }
+  async function renderBlock(part, mode, sentenceDelay) {
+    function makeBubble() {
+      const row = document.createElement('div');
+      row.className = 'assistant-row';
+      const avatar = document.createElement('div');
+      avatar.className = 'assistant-avatar orb';
+      avatar.innerHTML = '<div class="mini-orb"></div>';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble appear';
+      setTimeout(() => bubble.classList.remove('appear'), 450);
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      bodyEl.appendChild(row);
+      row.addEventListener('click', () => setActiveRow(row));
+      setActiveRow(row);
+      return { row, bubble, textWrap: bubble };
+    }
+    if (typeof part === 'string') {
+      const { textWrap } = makeBubble();
+      if (mode === 'sentence') {
+        await typeBySentences(part, textWrap, sentenceDelay);
+      } else {
+        await typeByChars(part, textWrap);
+      }
+      return;
+    }
+    if (!part || typeof part !== 'object') return;
+    switch (part.type) {
+      case 'p': {
+        const txt = String(part.text || '');
+        const delay = Number(part.sentenceDelay) || sentenceDelay;
+        const { textWrap } = makeBubble();
+        if (mode === 'sentence') {
+          await typeBySentences(txt, textWrap, delay);
+        } else {
+          await typeByChars(txt, textWrap);
+        }
+        break;
+      }
+      case 'ul': {
+        const { textWrap } = makeBubble();
+        const ul = document.createElement('ul');
+        ul.style.margin = '0 0 0 18px';
+        textWrap.appendChild(ul);
+        for (const item of (part.items || [])) {
+          const li = document.createElement('li');
+          ul.appendChild(li);
+          li.textContent = String(item ?? '');
+          await sleep(Math.max(60, sentenceDelay - 40));
+        }
+        break;
+      }
+      case 'img': {
+        const { textWrap } = makeBubble();
+        const img = document.createElement('img');
+        img.alt = part.alt || '';
+        img.src = part.src || '';
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '10px';
+        textWrap.appendChild(img);
+        await new Promise(res => {
+          img.addEventListener('load', res);
+          img.addEventListener('error', res);
+        });
+        break;
+      }
+      case 'pause': {
+        await sleep(Number(part.ms || 400));
+        break;
+      }
+      default: {
+        const txt = String(part.text || '');
+        const { textWrap } = makeBubble();
+        if (mode === 'sentence') {
+          await typeBySentences(txt, textWrap, sentenceDelay);
+        } else {
+          await typeByChars(txt, textWrap);
+        }
+      }
+    }
+  }
+  let parts = []; let rendered = -1; let finished = false;
+  async function renderNext() {
+    if (finished) { if (btnForm) btnForm.submit(); else btnEl.click(); return; }
+    if (rendered === -1) { bodyEl.innerHTML = ''; btnEl.style.visibility = 'hidden'; scheduleScroll(); }
+    const obj = window.__hintObject; const mode = (obj && obj.mode) || 'sentence'; const sentenceDelay = Number(obj && obj.sentenceDelay) || defaultSentenceDelay; const nextIndex = rendered + 1; if (!parts[nextIndex]) { finished = true; btnEl.textContent = obj?.finalCta || 'Pokračovat'; btnEl.style.visibility = 'visible'; scheduleScroll(); return; }
+    const typing = showTyping(); await sleep(350 + Math.random() * 250); removeTyping(typing); scheduleScroll(); await renderBlock(parts[nextIndex], mode, sentenceDelay); const lastRow = bodyEl.querySelector('.assistant-row:last-of-type'); if (lastRow) setActiveRow(lastRow); scheduleScroll(); rendered = nextIndex; if (rendered < parts.length - 1) { btnEl.textContent = obj?.nextCta || 'Pokračovat'; btnEl.style.visibility = 'visible'; scheduleScroll(); } else { finished = true; btnEl.textContent = obj?.finalCta || 'Jdeme na otázky'; btnEl.style.visibility = 'visible'; }
+  }
+  if (btnForm) { btnForm.addEventListener('submit', (e) => { if (!finished) { e.preventDefault(); renderNext(); } }); }
+  btnEl.addEventListener('click', (e) => { if (!btnForm) { e.preventDefault(); renderNext(); } });
+  fetch('/static/hints.json').then(r => r.json()).then(json => { const data = json || {}; const obj = data[key] || { title: 'My Priorities', body: ['Pokračuj tlačítkem níže.'] }; window.__hintObject = obj; const raw = Array.isArray(obj.body) ? obj.body : (obj.body ? [obj.body] : []); parts = raw.map(p => (typeof p === 'string' ? { type: 'p', text: p } : p)); titleEl.textContent = obj.title || ''; bodyEl.innerHTML = ''; btnEl.style.visibility = 'hidden'; renderNext(); }).catch(() => { const obj = { title: 'My Priorities', body: [{ type: 'p', text: 'Pokračuj tlačítkem níže.' }] }; window.__hintObject = obj; parts = obj.body; titleEl.textContent = obj.title; bodyEl.innerHTML = ''; renderNext(); });
+      }) ();
+  {% elif stage == 'duel' %}
+  setProgress(Math.round(100 * ({{ progress.index }} - 1) / {{ progress.total }})); bindTooltips(document);
+  {% else %}
+  setProgress(0);
+  {% endif %}
+
+  // Header height CSS var
+  (function () {
+    const hdr = document.querySelector('.glass > header');
+    if (!hdr) return;
+    function setHdrVar() {
+      const h = Math.round(hdr.getBoundingClientRect().height || 0);
+      document.documentElement.style.setProperty('--inner-hdr-h', h + 'px');
+    }
+    setHdrVar();
+    addEventListener('resize', setHdrVar, { passive: true });
+    addEventListener('load', setHdrVar, { once: true });
+    if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+      document.fonts.ready.then(setHdrVar).catch(() => { });
+    }
+    if (typeof ResizeObserver === 'function') {
+      try { new ResizeObserver(() => setHdrVar()).observe(hdr); } catch (_) { }
+    }
+  })();
+</script>
+{% endblock %}
