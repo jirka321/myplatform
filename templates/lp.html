@@ -35,6 +35,7 @@
         --space-5: 32px;
         --z-orb: 2;
         --z-cue: 30;
+        --orb-mobile-shift-x: 0px;
     }
 
     /* Desktop overrides */
@@ -241,6 +242,7 @@
         position: relative;
         margin: 56px auto 16px;
         pointer-events: none;
+        transform: translateX(var(--orb-mobile-shift-x, 0));
     }
 
     @media (min-width: 1181px) {
@@ -1051,13 +1053,15 @@
     })();
 </script>
 <script>
-    // Micro-parallax for the orb (all devices).
+    // Micro-parallax for the orb (desktop only).
     (function () {
         const wrap = document.querySelector('.orb-wrap');
+        const mq = window.matchMedia('(min-width: 1181px)');
         if (!wrap) return;
+        if (!mq.matches) return;
 
         let rafId = null;
-        let targetX = 0, targetY = 0;
+        let targetX = -50, targetY = 0;
         let curX = 0, curY = 0;
         const max = 6; // px movement range
 
@@ -1081,7 +1085,9 @@
             const k = 0.12;
             curX += (targetX - curX) * k;
             curY += (targetY - curY) * k;
-            wrap.style.transform = `translate3d(${curX}px, ${curY}px, 0) translateY(-10px) translateX(-50px)`;
+            const isDesktop = window.matchMedia('(min-width: 1181px)').matches;
+            const baseX = isDesktop ? -50 : -10;
+            wrap.style.transform = `translate3d(${curX}px, ${curY}px, 0) translateY(-10px) translateX(${baseX}px)`;
             wrap.style.willChange = 'transform';
             if (Math.abs(curX - targetX) > 0.1 || Math.abs(curY - targetY) > 0.1) {
                 rafId = requestAnimationFrame(tick);
