@@ -1,0 +1,71 @@
+{
+    "welcome": {
+        "typingDelay": 22,
+        "hideMeters": true,
+        "theme": "minimal",
+        "body": [
+            {
+                "type": "p",
+                "text": "Vítej! Než se pustíš dál, chtěl bych ti krátce představit, co tě v My Priorities čeká. Tento nástroj je navržen tak, aby ti pomohl rychle a jasně určit, co je pro tebe v životě opravdu důležité. V dnešním uspěchaném světě je snadné se ztratit v množství možností a povinností, proto jsme vytvořili systém, který ti umožní soustředit se na to podstatné. Celý proces je jednoduchý a přehledný – nečekej žádné složité analýzy nebo dlouhé úvahy. Naopak, půjde o rychlá rozhodnutí, která ti pomohou lépe pochopit své priority a nastavit si jasný směr."
+            },
+            {
+                "type": "img",
+                "src": "/static/media/welcome.png",
+                "alt": "Ilustrační obrázek",
+                "width": 600
+            },
+            {
+                "type": "p",
+                "text": "Začneme s několika rychlými volbami, které tě donutí zvolit mezi dvěma možnostmi bez možnosti neutrálního postoje. Tímto způsobem se vyhneš váhání a skutečně poznáš, co ti leží na srdci. Neboj se, není to závod ani test, kde by bylo potřeba dosáhnout dokonalosti. Jde o tvůj osobní prostor pro reflexi a rozhodování. Každý krok tě přiblíží k lepšímu pochopení sebe sama a svých cílů. Během procesu tě také občas zastavíme s krátkými tipy a radami, které ti pomohou lépe pracovat se svými volbami a využít je ve svém životě. Věříme, že i když máš málo času, právě proto je tento nástroj pro tebe ideální. Rychlá a jasná rozhodnutí často vedou k lepším výsledkům než dlouhé přemýšlení plné pochybností."
+            },
+            {
+                "type": "p",
+                "text": "Pamatuj, že nejde o to být perfektní, ale být upřímný sám k sobě. Každá volba, kterou učiníš, je krokem k tomu, abys žil život, který tě naplňuje a dává smysl. Jak budeš postupovat, uvidíš, že tvé priority se mohou měnit a vyvíjet. To je normální a zdravé. My Priorities ti pomůže tyto změny sledovat a přizpůsobovat své rozhodnutí aktuálním potřebám. Neboj se být k sobě upřímný a otevřený. Tvé odpovědi jsou tvůj osobní kompas, který ti ukáže cestu vpřed. Čím víc do toho vložíš sebe, tím hodnotnější budou výsledky. Na závěr si pamatuj, že tento nástroj je tu pro tebe – aby ti pomohl lépe porozumět sobě samému a žít život podle svých skutečných hodnot a cílů. Pusť se do toho s lehkostí a otevřenou myslí. Pokud budeš mít kdykoli pocit, že potřebuješ pauzu nebo si chceš něco připomenout, klidně se vrať a projdi si své volby znovu. My Priorities je tu, aby ti sloužil, kdykoli to budeš potřebovat. Připraven? Pokračuj."
+            }
+        ],
+        "primary": "Pokračovat"
+    },
+    "after5": {
+        "body": [
+            {
+                "type": "p",
+                "text": "Dobrá práce! Prvních pět máš za sebou. To bolí jen poprvé."
+            },
+            {
+                "type": "p",
+                "text": "Díváme se na rozpočet a tempo. Nepřemýšlej přehnaně, rozhoduj."
+            },
+            {
+                "type": "img",
+                "src": "/static/media/after5.png",
+                "alt": "Ukazatele po 5",
+                "width": 520
+            }
+        ],
+        "primary": "Dalších 15"
+    },
+    "after20": {
+        "body": [
+            {
+                "type": "p",
+                "text": "Teď přidáme prostřední ukazatel. Zrcadlí posun tvého těžiště voleb."
+            }
+        ],
+        "primary": "Pokračovat"
+    },
+    "after50": {
+        "title": "Rychlá pauza",
+        "body": [
+            {
+                "type": "p",
+                "text": "Od teď rozhodují instinkty. Hlavu nech na později."
+            },
+            {
+                "type": "html",
+                "html": "<strong>Tip:</strong> když si nejsi jistý, zvolíš to, co tě víc táhne vpřed."
+            }
+        ],
+        "primary": "Jdeme dál",
+        "secondary": "Připomenout později"
+    }
+}
