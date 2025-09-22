@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa priorit — test (mobile‑first){% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Všechny styly z původního test.html - zde jen ty potřebné pro duely */
+  .glass>header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    margin: 0 var(--content-px);
+    padding: 14px 12px;
+    background: rgba(255, 255, 255, 0.55) !important;
+    border: 1px solid rgba(15, 27, 36, 0.08) !important;
+    box-shadow: 0 6px 16px rgba(15, 27, 36, 0.06) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+
+  .glass>header,
+  .glass>main {
+    padding-left: var(--content-px);
+    padding-right: var(--content-px);
+  }
+
+  .progressRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .circleWrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+  }
+
+  .circleWrap svg {
+    transform: rotate(-90deg);
+    overflow: visible;
+    background: transparent;
+    display: block;
+  }
+
+  .circle-track {
+    stroke: rgba(15, 27, 36, .14);
+  }
+
+  .circle-bar {
+    stroke: var(--accent-a);
+    transition: stroke-dashoffset .3s ease;
+    filter: drop-shadow(0 0 6px rgba(126, 200, 255, .25));
+  }
+
+  .circleWrap .pct {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    color: #274156;
+  }
+
+  .kicker {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  /* Duel styly */
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .optionCard {
+    border: 1px solid rgba(15, 27, 36, .10);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    background: #fff;
+    transition: box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+  }
+
+  .optionCard:hover {
+    border-color: rgba(0, 140, 255, .35);
+    box-shadow: 0 6px 20px rgba(0, 140, 255, .08);
+    transform: translateY(-1px);
+  }
+
+  .optionCard .name {
+    font-weight: 800;
+    color: #0f1a24;
+  }
+
+  .tip {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: #001224;
+    background: #ffffff;
+    border: 1px solid rgba(15, 27, 36, .16);
+    border-radius: 8px;
+    box-shadow: 0 8px 18px rgba(15, 27, 36, .18);
+    transform: translate(-50%, calc(-100% - 10px));
+    opacity: 0;
+    transition: opacity .12s ease;
+    max-width: 260px;
+    white-space: normal;
+  }
+
+  .tip.visible {
+    opacity: 1;
+  }
+
+  @media (min-width: 700px) {
+    .pair {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .glass>header {
+      gap: 10px;
+    }
+    .progressRow {
+      gap: 10px;
+    }
+    .header-right {
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 899px) {
+    .glass>header {
+      position: static;
+      top: auto;
+      left: auto;
+      right: auto;
+      z-index: auto;
+      margin-bottom: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .glass>main {
+      margin-top: 0;
+      padding-top: 12px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="glass">
+  <header>
+    <div class="header-right">
+      <div class="progressRow">
+        <div class="circleWrap" tabindex="0" data-tip="Postup v otázkách: kolik % máš hotovo.">
+          <svg width="56" height="56" viewBox="0 0 56 56" aria-label="Progres">
+            <circle class="circle-track" cx="28" cy="28" r="22" fill="none" stroke-width="6" />
+            <circle class="circle-bar" id="circleBar" cx="28" cy="28" r="22" fill="none" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="138.23" />
+          </svg>
+          <div class="pct" id="circleText">0%</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="app" aria-live="polite">
+    {% if stage == "duel" %}
+    <div class="kicker">Porovnání {{ progress.index }} / {{ progress.total }}</div>
+    
+    <form method="POST" action="{{ url_for('priorities.answer_duel') }}">
+      <input type="hidden" name="a_key" value="{{ data.a.key }}">
+      <input type="hidden" name="b_key" value="{{ data.b.key }}">
+      
+      <div class="pair">
+        <button class="optionCard" type="submit" name="chosen_key" value="{{ data.a.key }}">
+          <div class="name">🅰️ {{ data.a.label }}</div>
+        </button>
+        <button class="optionCard" type="submit" name="chosen_key" value="{{ data.b.key }}">
+          <div class="name">🅱️ {{ data.b.label }}</div>
+        </button>
+      </div>
+    </form>
+    {% elif stage == "result" %}
+    <script>
+      (function () {
+        var url = {{ url_for('priorities.standalone_results') | tojson }};
+        // Prevent redirect loop if we're already there
+        if (location.pathname !== new URL(url, location.origin).pathname) {
+          location.replace(url);
+        }
+      })();
+    </script>
+    <noscript>
+      <p>Výsledky jsou připravené. Pokračuj na <a href="{{ url_for('priorities.standalone_results') }}">stránku výsledků</a>.</p>
+    </noscript>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Tooltip system
+  const __tipEl = document.createElement('div'); __tipEl.className = 'tip'; document.body.appendChild(__tipEl);
+  function bindTooltips(root = document) {
+    const nodes = root.querySelectorAll?.('[data-tip]') || [];
+    nodes.forEach(el => {
+      const show = (e) => { __tipEl.textContent = el.getAttribute('data-tip') || ''; if (!__tipEl.textContent) return; __tipEl.classList.add('visible'); positionTip(e); };
+      const hide = () => { __tipEl.classList.remove('visible'); };
+      const move = (e) => positionTip(e);
+      el.addEventListener('mouseenter', show);
+      el.addEventListener('mouseleave', hide);
+      el.addEventListener('mousemove', move);
+      el.addEventListener('focus', (e) => { __tipEl.textContent = el.getAttribute('data-tip') || ''; if (!__tipEl.textContent) return; __tipEl.classList.add('visible'); const rect = el.getBoundingClientRect(); positionTip({ clientX: rect.left + rect.width / 2, clientY: rect.top }); });
+      el.addEventListener('blur', () => __tipEl.classList.remove('visible'));
+    });
+  }
+  function positionTip(e) {
+    const padding = 10; const rect = __tipEl.getBoundingClientRect();
+    let x = (typeof e.clientX === 'number') ? e.clientX : window.innerWidth / 2;
+    let y = (typeof e.clientY === 'number') ? e.clientY : 0;
+    x = Math.max(padding + rect.width / 2, Math.min(window.innerWidth - padding - rect.width / 2, x));
+    const minY = padding + rect.height + 6;
+    y = Math.max(minY, y);
+    __tipEl.style.left = x + 'px'; __tipEl.style.top = (y - 8) + 'px';
+  }
+
+  // Progress circle
+  const circleBar = document.getElementById('circleBar');
+  const circleText = document.getElementById('circleText');
+  const CIRC = 2 * Math.PI * 22;
+  function setProgress(pct) {
+    const p = Math.max(0, Math.min(100, Math.round(pct)));
+    if (circleBar) circleBar.style.strokeDashoffset = CIRC * (1 - p / 100);
+    if (circleText) circleText.textContent = p + '%';
+  }
+
+  // Initialize
+  setProgress(Math.round(100 * ({{ progress.index }} - 1) / {{ progress.total }}));
+  bindTooltips(document);
+
+  // Header height CSS var
+  (function () {
+    const hdr = document.querySelector('.glass > header');
+    if (!hdr) return;
+    function setHdrVar() {
+      const h = Math.round(hdr.getBoundingClientRect().height || 0);
+      document.documentElement.style.setProperty('--inner-hdr-h', h + 'px');
+    }
+    setHdrVar();
+    addEventListener('resize', setHdrVar, { passive: true });
+    addEventListener('load', setHdrVar, { once: true });
+    if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+      document.fonts.ready.then(setHdrVar).catch(() => { });
+    }
+    if (typeof ResizeObserver === 'function') {
+      try { new ResizeObserver(() => setHdrVar()).observe(hdr); } catch (_) { }
+    }
+  })();
+</script>
+{% endblock %}
